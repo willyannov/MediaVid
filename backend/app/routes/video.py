@@ -52,11 +52,16 @@ async def download_video(request: DownloadRequest, background_tasks: BackgroundT
         # Agenda limpeza do arquivo após enviar
         background_tasks.add_task(downloader.cleanup_file, filepath)
         
-        # Retorna o arquivo para download
+        # Retorna o arquivo para download com header correto
+        headers = {
+            'Content-Disposition': f'attachment; filename="{result["filename"]}"'
+        }
+        
         return FileResponse(
             path=filepath,
             filename=result['filename'],
-            media_type='application/octet-stream'
+            media_type='application/octet-stream',
+            headers=headers
         )
         
     except HTTPException:
