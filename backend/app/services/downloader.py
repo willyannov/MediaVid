@@ -195,15 +195,6 @@ class VideoDownloader:
                 time.sleep(30)  # Espera 30s em caso de 429
             
             return None
-                elif 'no video formats' in error_msg:
-                    continue
-                # Se é erro fatal (URL inválida, vídeo removido), para de tentar
-                elif 'unsupported url' in error_msg or 'video unavailable' in error_msg:
-                    raise e
-                elif 'unsupported url' in error_msg or 'video unavailable' in error_msg:
-                    raise e
-        
-        return None
     
     def get_video_info(self, url: str) -> VideoInfo:
         """Extrai informações do vídeo sem baixar"""
