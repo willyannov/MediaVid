@@ -15,6 +15,7 @@ from app.config import settings
 from app.services.tiktok_fallback import TikTokFallback
 from app.services.youtube_fallback import YouTubeFallback
 from app.services.youtube_api_fallback import YouTubeApiFallback
+from app.services.browser_cookies import BrowserCookieExtractor
 
 
 class VideoDownloader:
@@ -35,6 +36,10 @@ class VideoDownloader:
         self.tiktok_fallback = TikTokFallback()
         self.youtube_fallback = YouTubeFallback()
         self.youtube_api_fallback = YouTubeApiFallback()
+        
+        # Extrator de cookies do navegador
+        self.cookie_extractor = BrowserCookieExtractor()
+        self.youtube_cookies_file = self.cookie_extractor.extract_youtube_cookies()
     
     def _generate_random_code(self, length=8) -> str:
         """Gera código aleatório alfanumérico"""
@@ -136,7 +141,22 @@ class VideoDownloader:
         
         # Lista de configurações para tentar (em ordem de prioridade)
         configs_to_try = [
-            # Config 1: TV Embedded com visitor_data (MELHOR bypass - sem cookies)
+            # Config 1: COM COOKIES DO NAVEGADOR (PRIORIDADE MÁXIMA)
+            {
+                'quiet': True,
+                'no_warnings': True,
+                'skip_download': True,
+                'cookiefile': self.youtube_cookies_file,  # USA COOKIES DO NAVEGADOR!
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['web'],
+                    }
+                },
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                },
+            },
+            # Config 2: TV Embedded sem cookies (fallback)
             {
                 'quiet': True,
                 'no_warnings': True,
@@ -152,7 +172,7 @@ class VideoDownloader:
                 },
                 'format': 'best',
             },
-            # Config 2: Android client otimizado
+            # Config 3: Android client otimizado
             {
                 'quiet': True,
                 'no_warnings': True,
@@ -170,56 +190,20 @@ class VideoDownloader:
                     'X-YouTube-Client-Version': '19.09.37',
                 },
             },
-            # Config 3: Web embedded
-            {
-                'quiet': True,
-                'no_warnings': True,
-                'skip_download': True,
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['web_embedded'],
-                    }
-                },
-                'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Referer': 'https://www.youtube.com/',
-                },
-            },
-            # Config 4: iOS client (última tentativa)
-            {
-                'quiet': True,
-                'no_warnings': True,
-                'skip_download': True,
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['ios', 'android'],
-                    }
-                },
-                'http_headers': {
-                    'User-Agent': 'com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)',
-                },
-            },
-            # Config 5: Mobile web (mweb) - bypass forte para servidores
-            {
-                'quiet': True,
-                'no_warnings': True,
-                'skip_download': True,
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['mweb', 'android'],
-                    }
-                },
-                'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
-                    'X-YouTube-Client-Name': '2',
-                    'X-YouTube-Client-Version': '2.20240304.00.00',
-                },
-            },
         ]
+        
+        # Se não temos cookies, remove a config 1
+        if not self.youtube_cookies_file:
+            print("⚠️ Cookies do navegador não disponíveis, usando configs sem autenticação")
+            configs_to_try = configs_to_try[1:]  # Remove primeira config
         
         for i, config in enumerate(configs_to_try, 1):
             try:
-                print(f"🔄 Tentativa {i}/{len(configs_to_try)} para extrair vídeo do YouTube...")
+                if config.get('cookiefile'):
+                    print(f"🍪 Tentativa {i}/{len(configs_to_try)} COM COOKIES do navegador...")
+                else:
+                    print(f"🔄 Tentativa {i}/{len(configs_to_try)} sem cookies...")
+                    
                 with yt_dlp.YoutubeDL(config) as ydl:  # type: ignore
                     info = ydl.extract_info(url, download=False)
                     if info:

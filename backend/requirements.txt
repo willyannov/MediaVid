@@ -2,6 +2,7 @@ fastapi==0.104.1
 uvicorn[standard]==0.24.0
 yt-dlp>=2024.12.13
 pytubefix>=10.3.0
+browser-cookie3>=0.20.0
 python-multipart==0.0.6
 pydantic>=2.7.0
 python-dotenv==1.0.0
