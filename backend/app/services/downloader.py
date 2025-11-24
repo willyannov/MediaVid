@@ -52,6 +52,22 @@ class VideoDownloader:
         if settings.YOUTUBE_COOKIES:
             print("🍪 Usando cookies do YouTube de variável de ambiente...")
             try:
+                cookies_content = settings.YOUTUBE_COOKIES.strip()
+                
+                # Validação básica do formato Netscape
+                if not cookies_content.startswith('# Netscape HTTP Cookie File'):
+                    print("⚠️ AVISO: Cookies não estão no formato Netscape correto!")
+                    print("Primeira linha deve ser: # Netscape HTTP Cookie File")
+                    print(f"Encontrado: {cookies_content[:50]}...")
+                
+                # Conta quantas linhas de cookies válidas existem
+                cookie_lines = [l for l in cookies_content.split('\n') if l.strip() and not l.startswith('#')]
+                print(f"📊 Total de cookies encontrados: {len(cookie_lines)}")
+                
+                if len(cookie_lines) == 0:
+                    print("❌ ERRO: Nenhum cookie válido encontrado!")
+                    return None
+                
                 # Salva cookies em arquivo temporário
                 cookie_file = tempfile.NamedTemporaryFile(
                     mode='w',
@@ -59,12 +75,20 @@ class VideoDownloader:
                     delete=False,
                     encoding='utf-8'
                 )
-                cookie_file.write(settings.YOUTUBE_COOKIES)
+                cookie_file.write(cookies_content)
                 cookie_file.close()
                 print(f"✅ Cookies salvos em: {cookie_file.name}")
+                
+                # Mostra primeiros cookies para debug (sem valores sensíveis)
+                sample_cookies = [l.split('\t')[5] if len(l.split('\t')) > 5 else 'invalid' 
+                                  for l in cookie_lines[:3]]
+                print(f"🔍 Exemplo de cookies: {', '.join(sample_cookies)}")
+                
                 return cookie_file.name
             except Exception as e:
                 print(f"⚠️ Erro ao processar cookies: {e}")
+                import traceback
+                traceback.print_exc()
                 return None
         
         # Desenvolvimento: Tenta extrair do navegador
