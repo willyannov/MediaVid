@@ -88,7 +88,10 @@ vercel
 ## 💰 Configurar Google AdSense
 
 ### 1️⃣ Criar Conta AdSense
-1. Acesse https://www.google.com/adsense
+1. Acesse https://www.google.com/Tipo: A
+Nome: @
+Valor: 216.24.57.1
+TTL: 14400adsense
 2. Clique em "Começar"
 3. Preencha dados (URL do site, email)
 4. Aguarde aprovação (pode levar 1-3 dias)

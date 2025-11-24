@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://seu-dominio.com/sitemap.xml
+Sitemap: https://mediavid.site/sitemap.xml
 
 # Desallow temporários (opcional)
 Disallow: /api/

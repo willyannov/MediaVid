@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:5173,http://localhost:3000,https://mediavid-0bvc.onrender.com"
+    ALLOWED_ORIGINS: str = "http://localhost:5173,http://localhost:3000,https://mediavid-0bvc.onrender.com,https://mediavid.site,https://www.mediavid.site"
     
     # Download Settings
     MAX_CONCURRENT_DOWNLOADS: int = 3
