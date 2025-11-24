@@ -495,22 +495,28 @@ class VideoDownloader:
                 # Usa o caminho capturado pelo hook ou busca o arquivo
                 if downloaded_file_path and os.path.exists(downloaded_file_path):
                     filepath = Path(downloaded_file_path)
-                    print(f"✓ Arquivo (via hook): {filepath.name}")
+                    print(f"✓ Arquivo baixado: {filepath.name}")
                 else:
                     # Fallback: busca o arquivo mais recente na pasta temp
                     print("⚠ Caminho não capturado, buscando arquivo mais recente...")
-                    files = list(self.temp_path.glob("*.*"))
+                    files = list(self.temp_path.glob(f"MediaVid{platform}{random_code}.*"))
+                    if not files:
+                        # Busca qualquer arquivo recente como último recurso
+                        files = list(self.temp_path.glob("*.*"))
+                    
                     if not files:
                         raise Exception("Nenhum arquivo encontrado após download")
                     
                     # Pega o arquivo mais recente
                     filepath = max(files, key=lambda f: f.stat().st_mtime)
-                    print(f"✓ Arquivo (mais recente): {filepath.name}")
+                    print(f"✓ Arquivo encontrado: {filepath.name}")
             
             if request.client_id and self.ws_manager:
                 self.send_progress_sync(
                     request.client_id, 'complete', 100, 'Pronto para download!'
                 )
+            
+            print(f"✓ Retornando arquivo: {filepath.name}")
             
             return {
                 'success': True,
