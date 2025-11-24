@@ -178,18 +178,34 @@ class VideoDownloader:
                     'Referer': 'https://www.youtube.com/',
                 },
             },
-            # Config 4: iOS client
+            # Config 4: iOS client (última tentativa)
             {
                 'quiet': True,
                 'no_warnings': True,
                 'skip_download': True,
                 'extractor_args': {
                     'youtube': {
-                        'player_client': ['ios'],
+                        'player_client': ['ios', 'android'],
                     }
                 },
                 'http_headers': {
                     'User-Agent': 'com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)',
+                },
+            },
+            # Config 5: Mobile web (mweb) - bypass forte para servidores
+            {
+                'quiet': True,
+                'no_warnings': True,
+                'skip_download': True,
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['mweb', 'android'],
+                    }
+                },
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+                    'X-YouTube-Client-Name': '2',
+                    'X-YouTube-Client-Version': '2.20240304.00.00',
                 },
             },
         ]
