@@ -10,17 +10,6 @@ function VideoCard({ videoInfo }) {
     videoInfo.platform === 'TikTok' || 
     (videoInfo.url && videoInfo.url.includes('/shorts/'))
 
-  // Usar proxy para thumbnails (evita bloqueio CORS)
-  const getThumbnailUrl = (originalUrl) => {
-    if (!originalUrl) return null
-    // Se for Instagram/TikTok, usa o proxy do backend
-    if (videoInfo.platform === 'Instagram' || videoInfo.platform === 'TikTok') {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-      return `${apiUrl}/api/video/proxy-thumbnail?url=${encodeURIComponent(originalUrl)}`
-    }
-    return originalUrl
-  }
-
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
       {/* Thumbnail */}
@@ -29,9 +18,11 @@ function VideoCard({ videoInfo }) {
           isVerticalVideo ? 'aspect-[9/16] max-h-[600px]' : 'aspect-video'
         }`}>
           <img
-            src={getThumbnailUrl(videoInfo.thumbnail)}
+            src={videoInfo.thumbnail}
             alt={videoInfo.title}
             className="w-full h-full object-cover"
+            crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
             onError={(e) => {
               e.target.style.display = 'none'
               e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-300 dark:bg-gray-600"><svg class="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg></div>'
