@@ -1,0 +1,35 @@
+# 📦 Preparação para Deploy
+
+Este arquivo contém as configurações necessárias para fazer deploy no Render.com
+
+## Configurações do Render
+
+### Backend (Web Service)
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- **Root Directory:** `backend`
+
+### Frontend (Static Site)
+- **Build Command:** `npm install && npm run build`
+- **Publish Directory:** `dist`
+- **Root Directory:** `frontend`
+
+## Variáveis de Ambiente
+
+### Backend (.env)
+```
+ENVIRONMENT=production
+PORT=8000
+ALLOWED_ORIGINS=https://seu-frontend.onrender.com
+```
+
+### Frontend
+```
+VITE_API_URL=https://seu-backend.onrender.com
+```
+
+## Importante
+
+1. Substitua as URLs pelos endereços reais após deploy
+2. Configure CORS no backend para aceitar requisições do frontend
+3. Mantenha este arquivo atualizado

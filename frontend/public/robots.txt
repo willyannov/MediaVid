@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://seu-dominio.com/sitemap.xml
+
+# Desallow temporários (opcional)
+Disallow: /api/
+Disallow: /temp/
