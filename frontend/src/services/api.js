@@ -24,13 +24,13 @@ api.interceptors.response.use(
 export const videoAPI = {
   // Obter informações do vídeo
   getInfo: async (url) => {
-    const response = await api.post('/video/info', { url })
+    const response = await api.post('/api/video/info', { url })
     return response.data
   },
 
   // Baixar vídeo
   download: async (downloadRequest) => {
-    const response = await api.post('/video/download', downloadRequest, {
+    const response = await api.post('/api/video/download', downloadRequest, {
       responseType: 'blob',
     })
     return response
@@ -38,7 +38,7 @@ export const videoAPI = {
 
   // Obter formatos disponíveis
   getFormats: async () => {
-    const response = await api.get('/video/formats')
+    const response = await api.get('/api/video/formats')
     return response.data
   }
 }
