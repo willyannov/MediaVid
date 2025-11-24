@@ -205,10 +205,15 @@ class VideoDownloader:
             },
         }
         
-        # Se temos cookies (desenvolvimento local), adiciona
+        # Se temos cookies, adiciona
         if self.youtube_cookies_file:
-            print("🍪 Usando cookies do navegador...")
+            if settings.YOUTUBE_COOKIES:
+                print("🍪 Usando cookies do YouTube (variável de ambiente)...")
+            else:
+                print("🍪 Usando cookies do navegador local...")
             base_config['cookiefile'] = self.youtube_cookies_file
+        else:
+            print("⚠️ YouTube: Nenhum cookie disponível (pode ter problemas)")
         
         # Tenta extrair
         try:
@@ -220,7 +225,18 @@ class VideoDownloader:
                     return info
         except Exception as e:
             error_msg = str(e).lower()
-            print(f"❌ Erro ao extrair: {str(e)[:150]}")
+            print(f"❌ Erro ao extrair: {str(e)[:200]}")
+            
+            # Se é erro de formato não disponível, tenta listar formatos
+            if 'requested format is not available' in error_msg or 'format' in error_msg:
+                print("🔍 Tentando listar formatos disponíveis...")
+                try:
+                    list_config = base_config.copy()
+                    list_config['listformats'] = True
+                    with yt_dlp.YoutubeDL(list_config) as ydl:
+                        ydl.extract_info(url, download=False)
+                except Exception as list_error:
+                    print(f"⚠️ Não foi possível listar formatos: {list_error}")
             
             # Se é erro 429, informa sobre rate limiting
             if '429' in error_msg or 'too many requests' in error_msg:
@@ -529,6 +545,11 @@ class VideoDownloader:
             'extractor_args': self._get_extractor_args(platform)
         }
         
+        # Adiciona cookies do YouTube se disponível (produção ou desenvolvimento)
+        if platform == 'YouTube' and self.youtube_cookies_file:
+            ydl_opts['cookiefile'] = self.youtube_cookies_file
+            print("🍪 Usando cookies para download do YouTube")
+        
         # Configurações específicas para Instagram no download também
         if platform == 'Instagram':
             ydl_opts['username'] = None
@@ -597,11 +618,12 @@ class VideoDownloader:
                 # Para vídeos longos do YouTube com seleção de qualidade
                 heights = {'1080p': 1080, '720p': 720, '480p': 480, '360p': 360}
                 h = heights.get(request.quality, 720)
-                # Formato super flexível - tenta altura solicitada, mas aceita qualquer coisa se não houver
-                ydl_opts['format'] = f'bestvideo[height<={h}]+bestaudio/best[height<={h}]/bestvideo+bestaudio/best'
+                # Formato MUITO flexível - aceita qualquer coisa disponível
+                # Prioridade: altura exata → melhor até altura → qualquer vídeo+áudio → melhor único
+                ydl_opts['format'] = f'best[height<={h}]/bestvideo[height<={h}]+bestaudio/bestvideo+bestaudio/best'
             else:
-                # Padrão: melhor disponível
-                ydl_opts['format'] = 'bestvideo+bestaudio/best'
+                # Padrão: melhor disponível (aceita qualquer formato)
+                ydl_opts['format'] = 'best'
         
         print(f"Formato yt-dlp: {ydl_opts['format']}\n")
         
