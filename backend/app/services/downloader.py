@@ -282,14 +282,17 @@ class VideoDownloader:
                 print(f"⚠ Erro ao usar API alternativa TikTok: {e}")
                 print("→ Tentando yt-dlp como fallback...")
         
-        # ESTRATÉGIA ESPECIAL PARA YOUTUBE: Múltiplas tentativas
+        # ESTRATÉGIA ESPECIAL PARA YOUTUBE
         if platform == 'YouTube':
-            info = self._try_youtube_with_different_configs(url)
+            # Em produção (Render), vai direto nas APIs públicas (yt-dlp é bloqueado)
+            # Em desenvolvimento (localhost), tenta yt-dlp primeiro (mais rápido e confiável)
+            is_production = os.getenv('RENDER') or os.getenv('RAILWAY') or os.getenv('HEROKU')
             
-            # Se todas as tentativas do yt-dlp falharam, tenta fallback com APIs públicas
-            if not info:
+            info = None
+            
+            if is_production:
+                print("🌐 Ambiente de produção detectado - usando APIs públicas para YouTube")
                 try:
-                    print("🔄 yt-dlp bloqueado, tentando APIs alternativas...")
                     youtube_info = self.youtube_api_fallback.get_video_info(url)
                     
                     if youtube_info:
@@ -299,7 +302,6 @@ class VideoDownloader:
                         formats = []
                         for fmt in youtube_info.get('formats', []):
                             if fmt.get('url'):  # Só aceita formatos com URL direta
-                                from app.models.video import VideoFormat
                                 video_format = VideoFormat(
                                     format_id=fmt.get('format_id', ''),
                                     ext=fmt.get('ext', 'mp4'),
@@ -329,10 +331,56 @@ class VideoDownloader:
                         self._info_cache[url] = video_info
                         return video_info
                     else:
-                        raise Exception("APIs alternativas também falharam.")
+                        raise Exception("APIs públicas não conseguiram extrair o vídeo.")
                 except Exception as e:
-                    print(f"⚠ Erro ao usar APIs alternativas: {e}")
-                    raise Exception("Não foi possível acessar este vídeo do YouTube após múltiplas tentativas. Pode estar privado, com restrição de região ou ter sido removido.")
+                    print(f"⚠ Erro ao usar APIs públicas: {e}")
+                    raise Exception("Não foi possível acessar este vídeo do YouTube. Pode estar privado, com restrição de região ou ter sido removido.")
+            else:
+                # Em desenvolvimento, tenta yt-dlp (mais rápido e completo)
+                print("💻 Ambiente local - tentando yt-dlp para YouTube")
+                info = self._try_youtube_with_different_configs(url)
+                
+                # Se yt-dlp falhar localmente, tenta APIs como fallback
+                if not info:
+                    print("⚠ yt-dlp falhou, tentando APIs públicas como fallback...")
+                    try:
+                        youtube_info = self.youtube_api_fallback.get_video_info(url)
+                        if youtube_info:
+                            print("✅ Fallback com APIs públicas funcionou!")
+                            # Converte formatos (mesmo código de cima)
+                            formats = []
+                            for fmt in youtube_info.get('formats', []):
+                                if fmt.get('url'):
+                                    video_format = VideoFormat(
+                                        format_id=fmt.get('format_id', ''),
+                                        ext=fmt.get('ext', 'mp4'),
+                                        quality=fmt.get('quality'),
+                                        resolution=fmt.get('quality'),
+                                        filesize=fmt.get('filesize'),
+                                        format_note=fmt.get('quality'),
+                                        fps=fmt.get('fps'),
+                                        vcodec=fmt.get('vcodec'),
+                                        acodec=fmt.get('acodec'),
+                                    )
+                                    formats.append(video_format)
+                            
+                            video_info = VideoInfo(
+                                url=url,
+                                title=youtube_info.get('title', 'YouTube Video'),
+                                description=youtube_info.get('description'),
+                                thumbnail=youtube_info.get('thumbnail'),
+                                duration=youtube_info.get('duration', 0),
+                                uploader=youtube_info.get('uploader'),
+                                view_count=youtube_info.get('view_count'),
+                                formats=formats,
+                                platform='YouTube'
+                            )
+                            self._info_cache[url] = video_info
+                            return video_info
+                    except Exception as api_error:
+                        print(f"⚠ APIs públicas também falharam: {api_error}")
+                    
+                    raise Exception("Não foi possível acessar este vídeo do YouTube após múltiplas tentativas.")
         else:
             # Continua com yt-dlp para outras plataformas (incluindo Twitter)
             ydl_opts = {
