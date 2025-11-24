@@ -13,6 +13,7 @@ from app.models.video import VideoInfo, VideoFormat, DownloadRequest
 from app.utils.validators import detect_platform, sanitize_filename
 from app.config import settings
 from app.services.tiktok_fallback import TikTokFallback
+from app.services.youtube_fallback import YouTubeFallback
 
 
 class VideoDownloader:
@@ -29,8 +30,9 @@ class VideoDownloader:
         # Cache de informações de vídeo (evita requisições duplicadas)
         self._info_cache = {}
         
-        # Fallback para TikTok
+        # Fallbacks alternativos
         self.tiktok_fallback = TikTokFallback()
+        self.youtube_fallback = YouTubeFallback()
     
     def _generate_random_code(self, length=8) -> str:
         """Gera código aleatório alfanumérico"""
@@ -281,8 +283,35 @@ class VideoDownloader:
         # ESTRATÉGIA ESPECIAL PARA YOUTUBE: Múltiplas tentativas
         if platform == 'YouTube':
             info = self._try_youtube_with_different_configs(url)
+            
+            # Se todas as tentativas do yt-dlp falharam, tenta fallback com scraping
             if not info:
-                raise Exception("Não foi possível acessar este vídeo do YouTube após múltiplas tentativas. Pode estar privado, com restrição de região ou ter sido removido.")
+                try:
+                    print("🔄 Tentando método alternativo de extração do YouTube (HTML scraping)...")
+                    youtube_info = self.youtube_fallback.get_video_info(url)
+                    
+                    if youtube_info:
+                        print("✓ Vídeo do YouTube obtido via scraping HTML!")
+                        video_info = VideoInfo(
+                            url=url,
+                            title=youtube_info.get('title', 'YouTube Video'),
+                            description=youtube_info.get('description'),
+                            thumbnail=youtube_info.get('thumbnail'),
+                            duration=youtube_info.get('duration', 0),
+                            uploader=youtube_info.get('uploader'),
+                            view_count=youtube_info.get('view_count'),
+                            formats=youtube_info.get('formats', []),
+                            platform='YouTube'
+                        )
+                        
+                        # Guarda no cache
+                        self._info_cache[url] = video_info
+                        return video_info
+                    else:
+                        raise Exception("Método alternativo também falhou.")
+                except Exception as e:
+                    print(f"⚠ Erro ao usar scraping alternativo: {e}")
+                    raise Exception("Não foi possível acessar este vídeo do YouTube após múltiplas tentativas. Pode estar privado, com restrição de região ou ter sido removido.")
         else:
             # Continua com yt-dlp para outras plataformas (incluindo Twitter)
             ydl_opts = {
