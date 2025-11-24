@@ -597,12 +597,11 @@ class VideoDownloader:
                 # Para vídeos longos do YouTube com seleção de qualidade
                 heights = {'1080p': 1080, '720p': 720, '480p': 480, '360p': 360}
                 h = heights.get(request.quality, 720)
-                # Prioriza formatos progressivos (stream único, mais rápido)
-                # Formato mais flexível para evitar erros de "formato não disponível"
-                ydl_opts['format'] = f'best[height<={h}]/bestvideo[height<={h}]+bestaudio/best'
+                # Formato super flexível - tenta altura solicitada, mas aceita qualquer coisa se não houver
+                ydl_opts['format'] = f'bestvideo[height<={h}]+bestaudio/best[height<={h}]/bestvideo+bestaudio/best'
             else:
                 # Padrão: melhor disponível
-                ydl_opts['format'] = 'best'
+                ydl_opts['format'] = 'bestvideo+bestaudio/best'
         
         print(f"Formato yt-dlp: {ydl_opts['format']}\n")
         
