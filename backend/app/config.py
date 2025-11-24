@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     # Rate Limiting
     MAX_REQUESTS_PER_MINUTE: int = 30
     
+    # YouTube Cookies (opcional - para produção)
+    # Exportar cookies do navegador em modo anônimo seguindo:
+    # https://github.com/yt-dlp/yt-dlp/wiki/Extractors#exporting-youtube-cookies
+    YOUTUBE_COOKIES: str = ""  # Conteúdo do arquivo cookies.txt
+    
     @property
     def cors_origins(self) -> List[str]:
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]

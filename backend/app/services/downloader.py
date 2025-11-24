@@ -8,13 +8,14 @@ import asyncio
 import requests
 import random
 import string
+import time
+import tempfile
 from pathlib import Path
 from app.models.video import VideoInfo, VideoFormat, DownloadRequest
 from app.utils.validators import detect_platform, sanitize_filename
 from app.config import settings
 from app.services.tiktok_fallback import TikTokFallback
 from app.services.browser_cookies import BrowserCookieExtractor
-import time
 
 
 class VideoDownloader:
@@ -34,13 +35,45 @@ class VideoDownloader:
         # Fallback para TikTok
         self.tiktok_fallback = TikTokFallback()
         
-        # Extrator de cookies do navegador (apenas local)
-        self.cookie_extractor = BrowserCookieExtractor()
-        self.youtube_cookies_file = self.cookie_extractor.extract_youtube_cookies()
+        # Cookies do YouTube
+        self.youtube_cookies_file = self._setup_youtube_cookies()
         
         # Rate limiting para YouTube (evita erro 429)
         self._youtube_last_request = 0
         self._youtube_min_interval = 3  # segundos entre requisições
+    
+    def _setup_youtube_cookies(self) -> Optional[str]:
+        """
+        Configura cookies do YouTube:
+        1. Produção: Usa variável de ambiente YOUTUBE_COOKIES
+        2. Desenvolvimento: Extrai do navegador automaticamente
+        """
+        # Verifica se está em produção com cookies configurados
+        if settings.YOUTUBE_COOKIES:
+            print("🍪 Usando cookies do YouTube de variável de ambiente...")
+            try:
+                # Salva cookies em arquivo temporário
+                cookie_file = tempfile.NamedTemporaryFile(
+                    mode='w',
+                    suffix='.txt',
+                    delete=False,
+                    encoding='utf-8'
+                )
+                cookie_file.write(settings.YOUTUBE_COOKIES)
+                cookie_file.close()
+                print(f"✅ Cookies salvos em: {cookie_file.name}")
+                return cookie_file.name
+            except Exception as e:
+                print(f"⚠️ Erro ao processar cookies: {e}")
+                return None
+        
+        # Desenvolvimento: Tenta extrair do navegador
+        try:
+            cookie_extractor = BrowserCookieExtractor()
+            return cookie_extractor.extract_youtube_cookies()
+        except Exception as e:
+            print(f"ℹ️ Cookies do navegador não disponíveis: {e}")
+            return None
     
     def _generate_random_code(self, length=8) -> str:
         """Gera código aleatório alfanumérico"""
