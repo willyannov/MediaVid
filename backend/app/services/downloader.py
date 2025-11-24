@@ -13,9 +13,8 @@ from app.models.video import VideoInfo, VideoFormat, DownloadRequest
 from app.utils.validators import detect_platform, sanitize_filename
 from app.config import settings
 from app.services.tiktok_fallback import TikTokFallback
-from app.services.youtube_fallback import YouTubeFallback
-from app.services.youtube_api_fallback import YouTubeApiFallback
 from app.services.browser_cookies import BrowserCookieExtractor
+import time
 
 
 class VideoDownloader:
@@ -32,18 +31,29 @@ class VideoDownloader:
         # Cache de informações de vídeo (evita requisições duplicadas)
         self._info_cache = {}
         
-        # Fallbacks alternativos
+        # Fallback para TikTok
         self.tiktok_fallback = TikTokFallback()
-        self.youtube_fallback = YouTubeFallback()
-        self.youtube_api_fallback = YouTubeApiFallback()
         
-        # Extrator de cookies do navegador
+        # Extrator de cookies do navegador (apenas local)
         self.cookie_extractor = BrowserCookieExtractor()
         self.youtube_cookies_file = self.cookie_extractor.extract_youtube_cookies()
+        
+        # Rate limiting para YouTube (evita erro 429)
+        self._youtube_last_request = 0
+        self._youtube_min_interval = 3  # segundos entre requisições
     
     def _generate_random_code(self, length=8) -> str:
         """Gera código aleatório alfanumérico"""
         return ''.join(random.choices(string.ascii_lowercase + string.digits, k=length))
+    
+    def _apply_youtube_rate_limit(self):
+        """Aplica rate limiting para YouTube (evita erro 429)"""
+        elapsed = time.time() - self._youtube_last_request
+        if elapsed < self._youtube_min_interval:
+            sleep_time = self._youtube_min_interval - elapsed
+            print(f"⏱️ Rate limiting: aguardando {sleep_time:.1f}s...")
+            time.sleep(sleep_time)
+        self._youtube_last_request = time.time()
     
     def set_websocket_manager(self, manager):
         """Injeta o manager de WebSocket"""
@@ -137,86 +147,54 @@ class VideoDownloader:
         return configs.get(platform, {})
     
     def _try_youtube_with_different_configs(self, url: str) -> Optional[Dict[str, Any]]:
-        """Tenta extrair informações do YouTube com diferentes configurações"""
+        """
+        Tenta extrair informações do YouTube com yt-dlp.
+        Usa rate limiting para evitar erro 429 (Too Many Requests).
+        """
         
-        # Lista de configurações para tentar (em ordem de prioridade)
-        configs_to_try = [
-            # Config 1: COM COOKIES DO NAVEGADOR (PRIORIDADE MÁXIMA)
-            {
-                'quiet': True,
-                'no_warnings': True,
-                'skip_download': True,
-                'cookiefile': self.youtube_cookies_file,  # USA COOKIES DO NAVEGADOR!
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['web'],
-                    }
-                },
-                'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                },
-            },
-            # Config 2: TV Embedded sem cookies (fallback)
-            {
-                'quiet': True,
-                'no_warnings': True,
-                'skip_download': True,
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['tv_embedded'],
-                        'player_skip': ['webpage', 'configs'],
-                    },
-                    'youtubetab': {
-                        'skip': ['webpage'],
-                    }
-                },
-                'format': 'best',
-            },
-            # Config 3: Android client otimizado
-            {
-                'quiet': True,
-                'no_warnings': True,
-                'skip_download': True,
-                'extractor_args': {
-                    'youtube': {
-                        'player_client': ['android', 'web'],
-                        'skip': ['hls', 'dash', 'translated_subs'],
-                        'player_skip': ['configs'],
-                    }
-                },
-                'http_headers': {
-                    'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 13; en_US)',
-                    'X-YouTube-Client-Name': '3',
-                    'X-YouTube-Client-Version': '19.09.37',
-                },
-            },
-        ]
+        # Aplica rate limiting antes de qualquer requisição
+        self._apply_youtube_rate_limit()
         
-        # Se não temos cookies, remove a config 1
-        if not self.youtube_cookies_file:
-            print("⚠️ Cookies do navegador não disponíveis, usando configs sem autenticação")
-            configs_to_try = configs_to_try[1:]  # Remove primeira config
+        # Config base otimizada para produção
+        base_config = {
+            'quiet': True,
+            'no_warnings': True,
+            'skip_download': True,
+            'socket_timeout': 60,
+            'retries': 3,
+            'sleep_interval': 5,  # Delay mínimo entre requisições
+            'max_sleep_interval': 15,  # Delay máximo
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android', 'web'],
+                    'skip': ['hls', 'dash', 'translated_subs'],
+                }
+            },
+        }
         
-        for i, config in enumerate(configs_to_try, 1):
-            try:
-                if config.get('cookiefile'):
-                    print(f"🍪 Tentativa {i}/{len(configs_to_try)} COM COOKIES do navegador...")
-                else:
-                    print(f"🔄 Tentativa {i}/{len(configs_to_try)} sem cookies...")
-                    
-                with yt_dlp.YoutubeDL(config) as ydl:  # type: ignore
-                    info = ydl.extract_info(url, download=False)
-                    if info:
-                        print(f"✅ Sucesso na tentativa {i}!")
-                        return info
-            except Exception as e:
-                error_msg = str(e).lower()
-                print(f"⚠️ Tentativa {i} falhou: {str(e)[:150]}")
-                
-                # Se é erro de bot/autenticação, tenta próxima config
-                if 'sign in' in error_msg or 'authentication' in error_msg or 'bot' in error_msg or 'cookies' in error_msg:
-                    continue
-                # Se não tem formatos, tenta próxima config
+        # Se temos cookies (desenvolvimento local), adiciona
+        if self.youtube_cookies_file:
+            print("🍪 Usando cookies do navegador...")
+            base_config['cookiefile'] = self.youtube_cookies_file
+        
+        # Tenta extrair
+        try:
+            print("🔄 YouTube: Extraindo vídeo...")
+            with yt_dlp.YoutubeDL(base_config) as ydl:  # type: ignore
+                info = ydl.extract_info(url, download=False)
+                if info:
+                    print("✅ Vídeo extraído com sucesso!")
+                    return info
+        except Exception as e:
+            error_msg = str(e).lower()
+            print(f"❌ Erro ao extrair: {str(e)[:150]}")
+            
+            # Se é erro 429, informa sobre rate limiting
+            if '429' in error_msg or 'too many requests' in error_msg:
+                print("⚠️ Erro 429: Muitas requisições. Aguardando antes de tentar novamente...")
+                time.sleep(30)  # Espera 30s em caso de 429
+            
+            return None
                 elif 'no video formats' in error_msg:
                     continue
                 # Se é erro fatal (URL inválida, vídeo removido), para de tentar
@@ -268,103 +246,12 @@ class VideoDownloader:
         
         # ESTRATÉGIA ESPECIAL PARA YOUTUBE
         if platform == 'YouTube':
-            # Em produção (Render), vai direto nas APIs públicas (yt-dlp é bloqueado)
-            # Em desenvolvimento (localhost), tenta yt-dlp primeiro (mais rápido e confiável)
-            is_production = os.getenv('RENDER') or os.getenv('RAILWAY') or os.getenv('HEROKU')
+            # Usa yt-dlp em todos ambientes (local e produção)
+            # mweb é o cliente recomendado que não precisa de PO Token
+            info = self._try_youtube_with_different_configs(url)
             
-            info = None
-            
-            if is_production:
-                print("🌐 Ambiente de produção detectado - usando APIs públicas para YouTube")
-                try:
-                    youtube_info = self.youtube_api_fallback.get_video_info(url)
-                    
-                    if youtube_info:
-                        print("✅ Vídeo do YouTube obtido via API alternativa!")
-                        
-                        # Converte formatos da API para o formato VideoFormat
-                        formats = []
-                        for fmt in youtube_info.get('formats', []):
-                            if fmt.get('url'):  # Só aceita formatos com URL direta
-                                video_format = VideoFormat(
-                                    format_id=fmt.get('format_id', ''),
-                                    ext=fmt.get('ext', 'mp4'),
-                                    quality=fmt.get('quality'),
-                                    resolution=fmt.get('quality'),
-                                    filesize=fmt.get('filesize'),
-                                    format_note=fmt.get('quality'),
-                                    fps=fmt.get('fps'),
-                                    vcodec=fmt.get('vcodec'),
-                                    acodec=fmt.get('acodec'),
-                                )
-                                formats.append(video_format)
-                        
-                        video_info = VideoInfo(
-                            url=url,
-                            title=youtube_info.get('title', 'YouTube Video'),
-                            description=youtube_info.get('description'),
-                            thumbnail=youtube_info.get('thumbnail'),
-                            duration=youtube_info.get('duration', 0),
-                            uploader=youtube_info.get('uploader'),
-                            view_count=youtube_info.get('view_count'),
-                            formats=formats,
-                            platform='YouTube'
-                        )
-                        
-                        # Guarda no cache
-                        self._info_cache[url] = video_info
-                        return video_info
-                    else:
-                        raise Exception("APIs públicas não conseguiram extrair o vídeo.")
-                except Exception as e:
-                    print(f"⚠ Erro ao usar APIs públicas: {e}")
-                    raise Exception("Não foi possível acessar este vídeo do YouTube. Pode estar privado, com restrição de região ou ter sido removido.")
-            else:
-                # Em desenvolvimento, tenta yt-dlp (mais rápido e completo)
-                print("💻 Ambiente local - tentando yt-dlp para YouTube")
-                info = self._try_youtube_with_different_configs(url)
-                
-                # Se yt-dlp falhar localmente, tenta APIs como fallback
-                if not info:
-                    print("⚠ yt-dlp falhou, tentando APIs públicas como fallback...")
-                    try:
-                        youtube_info = self.youtube_api_fallback.get_video_info(url)
-                        if youtube_info:
-                            print("✅ Fallback com APIs públicas funcionou!")
-                            # Converte formatos (mesmo código de cima)
-                            formats = []
-                            for fmt in youtube_info.get('formats', []):
-                                if fmt.get('url'):
-                                    video_format = VideoFormat(
-                                        format_id=fmt.get('format_id', ''),
-                                        ext=fmt.get('ext', 'mp4'),
-                                        quality=fmt.get('quality'),
-                                        resolution=fmt.get('quality'),
-                                        filesize=fmt.get('filesize'),
-                                        format_note=fmt.get('quality'),
-                                        fps=fmt.get('fps'),
-                                        vcodec=fmt.get('vcodec'),
-                                        acodec=fmt.get('acodec'),
-                                    )
-                                    formats.append(video_format)
-                            
-                            video_info = VideoInfo(
-                                url=url,
-                                title=youtube_info.get('title', 'YouTube Video'),
-                                description=youtube_info.get('description'),
-                                thumbnail=youtube_info.get('thumbnail'),
-                                duration=youtube_info.get('duration', 0),
-                                uploader=youtube_info.get('uploader'),
-                                view_count=youtube_info.get('view_count'),
-                                formats=formats,
-                                platform='YouTube'
-                            )
-                            self._info_cache[url] = video_info
-                            return video_info
-                    except Exception as api_error:
-                        print(f"⚠ APIs públicas também falharam: {api_error}")
-                    
-                    raise Exception("Não foi possível acessar este vídeo do YouTube após múltiplas tentativas.")
+            if not info:
+                raise Exception("Não foi possível acessar este vídeo do YouTube. Verifique se o vídeo é público e tente novamente.")
         else:
             # Continua com yt-dlp para outras plataformas (incluindo Twitter)
             ydl_opts = {
