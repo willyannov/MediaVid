@@ -14,6 +14,7 @@ from app.utils.validators import detect_platform, sanitize_filename
 from app.config import settings
 from app.services.tiktok_fallback import TikTokFallback
 from app.services.youtube_fallback import YouTubeFallback
+from app.services.youtube_api_fallback import YouTubeApiFallback
 
 
 class VideoDownloader:
@@ -33,6 +34,7 @@ class VideoDownloader:
         # Fallbacks alternativos
         self.tiktok_fallback = TikTokFallback()
         self.youtube_fallback = YouTubeFallback()
+        self.youtube_api_fallback = YouTubeApiFallback()
     
     def _generate_random_code(self, length=8) -> str:
         """Gera código aleatório alfanumérico"""
@@ -284,14 +286,33 @@ class VideoDownloader:
         if platform == 'YouTube':
             info = self._try_youtube_with_different_configs(url)
             
-            # Se todas as tentativas do yt-dlp falharam, tenta fallback com scraping
+            # Se todas as tentativas do yt-dlp falharam, tenta fallback com APIs públicas
             if not info:
                 try:
-                    print("🔄 Tentando método alternativo de extração do YouTube (HTML scraping)...")
-                    youtube_info = self.youtube_fallback.get_video_info(url)
+                    print("🔄 yt-dlp bloqueado, tentando APIs alternativas...")
+                    youtube_info = self.youtube_api_fallback.get_video_info(url)
                     
                     if youtube_info:
-                        print("✓ Vídeo do YouTube obtido via scraping HTML!")
+                        print("✅ Vídeo do YouTube obtido via API alternativa!")
+                        
+                        # Converte formatos da API para o formato VideoFormat
+                        formats = []
+                        for fmt in youtube_info.get('formats', []):
+                            if fmt.get('url'):  # Só aceita formatos com URL direta
+                                from app.models.video import VideoFormat
+                                video_format = VideoFormat(
+                                    format_id=fmt.get('format_id', ''),
+                                    ext=fmt.get('ext', 'mp4'),
+                                    quality=fmt.get('quality'),
+                                    resolution=fmt.get('quality'),
+                                    filesize=fmt.get('filesize'),
+                                    format_note=fmt.get('quality'),
+                                    fps=fmt.get('fps'),
+                                    vcodec=fmt.get('vcodec'),
+                                    acodec=fmt.get('acodec'),
+                                )
+                                formats.append(video_format)
+                        
                         video_info = VideoInfo(
                             url=url,
                             title=youtube_info.get('title', 'YouTube Video'),
@@ -300,7 +321,7 @@ class VideoDownloader:
                             duration=youtube_info.get('duration', 0),
                             uploader=youtube_info.get('uploader'),
                             view_count=youtube_info.get('view_count'),
-                            formats=youtube_info.get('formats', []),
+                            formats=formats,
                             platform='YouTube'
                         )
                         
@@ -308,9 +329,9 @@ class VideoDownloader:
                         self._info_cache[url] = video_info
                         return video_info
                     else:
-                        raise Exception("Método alternativo também falhou.")
+                        raise Exception("APIs alternativas também falharam.")
                 except Exception as e:
-                    print(f"⚠ Erro ao usar scraping alternativo: {e}")
+                    print(f"⚠ Erro ao usar APIs alternativas: {e}")
                     raise Exception("Não foi possível acessar este vídeo do YouTube após múltiplas tentativas. Pode estar privado, com restrição de região ou ter sido removido.")
         else:
             # Continua com yt-dlp para outras plataformas (incluindo Twitter)
