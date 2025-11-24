@@ -16,13 +16,26 @@ function DownloadButton({ downloadRequest, disabled }) {
     try {
       const response = await videoAPI.download(downloadRequest)
       
-      // Extrai filename do header Content-Disposition ou usa default
-      let filename = 'video'
+      // Extrai filename do header Content-Disposition
+      let filename = 'video.mp4' // Default com extensão
       const contentDisposition = response.headers['content-disposition']
+      
       if (contentDisposition) {
+        // Tenta extrair o filename do header
         const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
         if (filenameMatch && filenameMatch[1]) {
-          filename = filenameMatch[1].replace(/['"]/g, '')
+          filename = filenameMatch[1].replace(/['"]/g, '').trim()
+        }
+      }
+      
+      // Se não tem extensão, tenta detectar do content-type
+      if (!filename.includes('.')) {
+        const contentType = response.headers['content-type']
+        if (contentType) {
+          if (contentType.includes('mp4')) filename += '.mp4'
+          else if (contentType.includes('webm')) filename += '.webm'
+          else if (contentType.includes('mkv')) filename += '.mkv'
+          else filename += '.mp4' // fallback
         }
       }
 
