@@ -127,68 +127,6 @@ class VideoDownloader:
         
         return configs.get(platform, {})
     
-    def _try_twitter_with_different_configs(self, url: str) -> Optional[Dict[str, Any]]:
-        """Tenta extrair informações do Twitter/X com diferentes configurações"""
-        
-        configs_to_try = [
-            # Config 1: GraphQL API (mais nova)
-            {
-                'quiet': True,
-                'no_warnings': True,
-                'skip_download': True,
-                'extractor_args': {
-                    'twitter': {
-                        'api': ['graphql'],
-                    }
-                },
-                'http_headers': {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Referer': 'https://x.com/',
-                    'Origin': 'https://x.com',
-                },
-            },
-            # Config 2: Legacy API
-            {
-                'quiet': True,
-                'no_warnings': True,
-                'skip_download': True,
-                'extractor_args': {
-                    'twitter': {
-                        'api': ['legacy'],
-                    }
-                },
-            },
-            # Config 3: Syndication (antiga mas às vezes funciona)
-            {
-                'quiet': True,
-                'no_warnings': True,
-                'skip_download': True,
-                'extractor_args': {
-                    'twitter': {
-                        'api': ['syndication'],
-                    }
-                },
-            },
-        ]
-        
-        for i, config in enumerate(configs_to_try, 1):
-            try:
-                print(f"🔄 Tentativa {i}/{len(configs_to_try)} para extrair vídeo do Twitter/X...")
-                with yt_dlp.YoutubeDL(config) as ydl:
-                    info = ydl.extract_info(url, download=False)
-                    if info:
-                        print(f"✅ Sucesso na tentativa {i}!")
-                        return info
-            except Exception as e:
-                error_msg = str(e).lower()
-                print(f"⚠️ Tentativa {i} falhou: {str(e)[:100]}")
-                
-                # Se é erro de URL inválida, não tenta mais
-                if 'unsupported url' in error_msg or 'invalid url' in error_msg:
-                    raise e
-        
-        return None
-    
     def _try_youtube_with_different_configs(self, url: str) -> Optional[Dict[str, Any]]:
         """Tenta extrair informações do YouTube com diferentes configurações"""
         
@@ -326,13 +264,8 @@ class VideoDownloader:
             info = self._try_youtube_with_different_configs(url)
             if not info:
                 raise Exception("Não foi possível acessar este vídeo do YouTube após múltiplas tentativas. Pode estar privado, com restrição de região ou ter sido removido.")
-        # ESTRATÉGIA ESPECIAL PARA TWITTER: Múltiplas tentativas
-        elif platform == 'Twitter':
-            info = self._try_twitter_with_different_configs(url)
-            if not info:
-                raise Exception("Não foi possível acessar este tweet. Verifique se contém vídeo e é público.")
         else:
-            # Continua com yt-dlp para outras plataformas
+            # Continua com yt-dlp para outras plataformas (incluindo Twitter)
             ydl_opts = {
                 'quiet': True,
                 'no_warnings': True,
