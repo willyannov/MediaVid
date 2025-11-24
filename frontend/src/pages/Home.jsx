@@ -160,11 +160,9 @@ function Home() {
                     <InstagramIcon className="w-5 h-5" />
                     Instagram
                   </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Reels, Posts e IGTV</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Reels</p>
                   <code className="text-xs text-gray-500 dark:text-gray-500 mt-1 block">
                     instagram.com/reel/...
-                    <br />
-                    instagram.com/p/...
                   </code>
                 </div>
                 
