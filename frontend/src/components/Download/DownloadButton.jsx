@@ -16,15 +16,21 @@ function DownloadButton({ downloadRequest, disabled }) {
     try {
       const response = await videoAPI.download(downloadRequest)
       
-      // Extrai filename do header Content-Disposition
+      // Debug: ver todos os headers
+      console.log('Response headers:', response.headers)
+      
+      // Extrai filename do header Content-Disposition (case-insensitive)
       let filename = 'video.mp4' // Default com extensão
-      const contentDisposition = response.headers['content-disposition']
+      const contentDisposition = response.headers['content-disposition'] || response.headers['Content-Disposition']
+      
+      console.log('Content-Disposition:', contentDisposition)
       
       if (contentDisposition) {
-        // Tenta extrair o filename do header
-        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
+        // Regex melhorada para capturar o filename
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=["']?([^"';\n]+)["']?/i)
         if (filenameMatch && filenameMatch[1]) {
-          filename = filenameMatch[1].replace(/['"]/g, '').trim()
+          filename = filenameMatch[1].trim()
+          console.log('Filename extraído:', filename)
         }
       }
       
@@ -39,6 +45,8 @@ function DownloadButton({ downloadRequest, disabled }) {
         }
       }
 
+      console.log('Filename final:', filename)
+      
       // Baixa o arquivo
       downloadBlob(response.data, filename)
       
