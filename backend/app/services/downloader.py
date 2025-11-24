@@ -112,7 +112,7 @@ class VideoDownloader:
             },
             'Twitter': {
                 'twitter': {
-                    'api': ['syndication'],  # API syndication como array
+                    'api': ['graphql', 'legacy', 'syndication'],  # Tenta múltiplas APIs
                 }
             },
             'Facebook': {},
@@ -127,39 +127,120 @@ class VideoDownloader:
         
         return configs.get(platform, {})
     
+    def _try_twitter_with_different_configs(self, url: str) -> Optional[Dict[str, Any]]:
+        """Tenta extrair informações do Twitter/X com diferentes configurações"""
+        
+        configs_to_try = [
+            # Config 1: GraphQL API (mais nova)
+            {
+                'quiet': True,
+                'no_warnings': True,
+                'skip_download': True,
+                'extractor_args': {
+                    'twitter': {
+                        'api': ['graphql'],
+                    }
+                },
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Referer': 'https://x.com/',
+                    'Origin': 'https://x.com',
+                },
+            },
+            # Config 2: Legacy API
+            {
+                'quiet': True,
+                'no_warnings': True,
+                'skip_download': True,
+                'extractor_args': {
+                    'twitter': {
+                        'api': ['legacy'],
+                    }
+                },
+            },
+            # Config 3: Syndication (antiga mas às vezes funciona)
+            {
+                'quiet': True,
+                'no_warnings': True,
+                'skip_download': True,
+                'extractor_args': {
+                    'twitter': {
+                        'api': ['syndication'],
+                    }
+                },
+            },
+        ]
+        
+        for i, config in enumerate(configs_to_try, 1):
+            try:
+                print(f"🔄 Tentativa {i}/{len(configs_to_try)} para extrair vídeo do Twitter/X...")
+                with yt_dlp.YoutubeDL(config) as ydl:
+                    info = ydl.extract_info(url, download=False)
+                    if info:
+                        print(f"✅ Sucesso na tentativa {i}!")
+                        return info
+            except Exception as e:
+                error_msg = str(e).lower()
+                print(f"⚠️ Tentativa {i} falhou: {str(e)[:100]}")
+                
+                # Se é erro de URL inválida, não tenta mais
+                if 'unsupported url' in error_msg or 'invalid url' in error_msg:
+                    raise e
+        
+        return None
+    
     def _try_youtube_with_different_configs(self, url: str) -> Optional[Dict[str, Any]]:
         """Tenta extrair informações do YouTube com diferentes configurações"""
         
         # Lista de configurações para tentar (em ordem de prioridade)
         configs_to_try = [
-            # Config 1: Android client (mais estável)
+            # Config 1: TV Embedded (SEM bot detection - melhor opção)
             {
                 'quiet': True,
                 'no_warnings': True,
                 'skip_download': True,
                 'extractor_args': {
                     'youtube': {
-                        'player_client': ['android'],
-                        'skip': ['hls', 'dash'],
+                        'player_client': ['tv_embedded'],
+                        'player_skip': ['webpage', 'configs'],
+                    }
+                },
+                'format': 'best',
+            },
+            # Config 2: Android client otimizado
+            {
+                'quiet': True,
+                'no_warnings': True,
+                'skip_download': True,
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['android', 'web'],
+                        'skip': ['hls', 'dash', 'translated_subs'],
+                        'player_skip': ['configs'],
                     }
                 },
                 'http_headers': {
-                    'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
+                    'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 13; en_US)',
+                    'X-YouTube-Client-Name': '3',
+                    'X-YouTube-Client-Version': '19.09.37',
                 },
             },
-            # Config 2: Web client com age bypass
+            # Config 3: Web embedded
             {
                 'quiet': True,
                 'no_warnings': True,
                 'skip_download': True,
-                'age_limit': 99,
                 'extractor_args': {
                     'youtube': {
-                        'player_client': ['web'],
+                        'player_client': ['web_embedded'],
                     }
                 },
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Referer': 'https://www.youtube.com/',
+                },
             },
-            # Config 3: iOS client
+            # Config 4: iOS client
             {
                 'quiet': True,
                 'no_warnings': True,
@@ -177,7 +258,7 @@ class VideoDownloader:
         
         for i, config in enumerate(configs_to_try, 1):
             try:
-                print(f"🔄 Tentativa {i}/3 para extrair vídeo do YouTube...")
+                print(f"🔄 Tentativa {i}/{len(configs_to_try)} para extrair vídeo do YouTube...")
                 with yt_dlp.YoutubeDL(config) as ydl:  # type: ignore
                     info = ydl.extract_info(url, download=False)
                     if info:
@@ -185,12 +266,17 @@ class VideoDownloader:
                         return info
             except Exception as e:
                 error_msg = str(e).lower()
-                print(f"⚠️ Tentativa {i} falhou: {str(e)[:100]}")
+                print(f"⚠️ Tentativa {i} falhou: {str(e)[:150]}")
                 
-                # Se é erro de autenticação/idade, tenta próxima config
-                if 'sign in' in error_msg or 'authentication' in error_msg or 'age' in error_msg:
+                # Se é erro de bot/autenticação, tenta próxima config
+                if 'sign in' in error_msg or 'authentication' in error_msg or 'bot' in error_msg or 'cookies' in error_msg:
                     continue
-                # Se é erro fatal (URL inválida), para de tentar
+                # Se não tem formatos, tenta próxima config
+                elif 'no video formats' in error_msg:
+                    continue
+                # Se é erro fatal (URL inválida, vídeo removido), para de tentar
+                elif 'unsupported url' in error_msg or 'video unavailable' in error_msg:
+                    raise e
                 elif 'unsupported url' in error_msg or 'video unavailable' in error_msg:
                     raise e
         
@@ -240,6 +326,11 @@ class VideoDownloader:
             info = self._try_youtube_with_different_configs(url)
             if not info:
                 raise Exception("Não foi possível acessar este vídeo do YouTube após múltiplas tentativas. Pode estar privado, com restrição de região ou ter sido removido.")
+        # ESTRATÉGIA ESPECIAL PARA TWITTER: Múltiplas tentativas
+        elif platform == 'Twitter':
+            info = self._try_twitter_with_different_configs(url)
+            if not info:
+                raise Exception("Não foi possível acessar este tweet. Verifique se contém vídeo e é público.")
         else:
             # Continua com yt-dlp para outras plataformas
             ydl_opts = {
@@ -267,9 +358,12 @@ class VideoDownloader:
                 ydl_opts['username'] = None  # Sem autenticação
                 ydl_opts['password'] = None
                 ydl_opts['cookiefile'] = None
-                # User-Agent de navegador real
+                ydl_opts['nocheckcertificate'] = True
+                # User-Agent mobile do Instagram (menos restritivo)
                 ydl_opts['http_headers'] = {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+                    'User-Agent': 'Instagram 76.0.0.15.395 Android (24/7.0; 640dpi; 1440x2560; samsung; SM-G930F; herolte; samsungexynos8890; en_US; 138226743)',
+                    'Accept': '*/*',
+                    'Accept-Language': 'en-US',
                 }
             
             # Configurações específicas para TikTok (bypass login)
@@ -291,21 +385,32 @@ class VideoDownloader:
                 error_msg = str(e)
                 error_lower = error_msg.lower()
                 
-                # Erros específicos do yt-dlp
+                # Mensagens genéricas e amigáveis (sem expor detalhes técnicos)
                 if 'unsupported url' in error_lower:
-                    raise Exception(f"URL não suportada. Verifique se o link está correto.")
-                elif 'private video' in error_lower:
+                    raise Exception("URL não suportada. Verifique se o link está correto.")
+                elif 'private video' in error_lower or 'this video is private' in error_lower:
                     raise Exception("Este vídeo é privado e não pode ser acessado.")
-                elif 'video unavailable' in error_lower or 'has been removed' in error_lower:
-                    raise Exception("Vídeo indisponível ou removido pela plataforma.")
-                elif 'requiring login' in error_lower or 'use --cookies' in error_lower:
-                    raise Exception("Este vídeo requer login. Apenas vídeos públicos são suportados.")
+                elif 'video unavailable' in error_lower or 'has been removed' in error_lower or 'no video could be found' in error_lower:
+                    raise Exception("Vídeo indisponível, removido ou não contém mídia para download.")
+                elif 'sign in' in error_lower or 'login' in error_lower or 'cookies' in error_lower or 'bot' in error_lower or 'authentication' in error_lower:
+                    # Mensagem genérica sem mencionar detalhes técnicos
+                    if platform == 'Instagram':
+                        raise Exception("Este conteúdo do Instagram não está acessível no momento. Tente outro vídeo público.")
+                    elif platform == 'Twitter':
+                        raise Exception("Este conteúdo do Twitter/X não está acessível no momento. Tente outro vídeo público.")
+                    else:
+                        raise Exception("Este vídeo requer autenticação ou não está disponível publicamente.")
                 elif 'geo restricted' in error_lower or 'not available in your country' in error_lower:
-                    raise Exception("Este vídeo tem restrição geográfica.")
+                    raise Exception("Este vídeo tem restrição geográfica e não está disponível na sua região.")
                 elif 'http error 429' in error_lower or 'too many requests' in error_lower:
-                    raise Exception("Muitas requisições. Aguarde alguns minutos.")
+                    raise Exception("Muitas requisições. Por favor, aguarde alguns minutos.")
+                elif 'empty media response' in error_lower:
+                    raise Exception("O conteúdo não está disponível ou requer login. Tente outro vídeo público.")
+                elif 'http error 404' in error_lower:
+                    raise Exception("Conteúdo não encontrado. Verifique se o link está correto.")
                 else:
-                    raise Exception(f"Erro ao extrair informações: {error_msg}")
+                    # Mensagem genérica sem expor stack trace do yt-dlp
+                    raise Exception("Não foi possível acessar este vídeo. Verifique se o link está correto e o vídeo é público.")
         
         # Processa os formatos disponíveis
         formats = []
