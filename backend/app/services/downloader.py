@@ -127,6 +127,75 @@ class VideoDownloader:
         
         return configs.get(platform, {})
     
+    def _try_youtube_with_different_configs(self, url: str) -> Optional[Dict[str, Any]]:
+        """Tenta extrair informações do YouTube com diferentes configurações"""
+        
+        # Lista de configurações para tentar (em ordem de prioridade)
+        configs_to_try = [
+            # Config 1: Android client (mais estável)
+            {
+                'quiet': True,
+                'no_warnings': True,
+                'skip_download': True,
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['android'],
+                        'skip': ['hls', 'dash'],
+                    }
+                },
+                'http_headers': {
+                    'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
+                },
+            },
+            # Config 2: Web client com age bypass
+            {
+                'quiet': True,
+                'no_warnings': True,
+                'skip_download': True,
+                'age_limit': 99,
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['web'],
+                    }
+                },
+            },
+            # Config 3: iOS client
+            {
+                'quiet': True,
+                'no_warnings': True,
+                'skip_download': True,
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['ios'],
+                    }
+                },
+                'http_headers': {
+                    'User-Agent': 'com.google.ios.youtube/19.09.3 (iPhone14,3; U; CPU iOS 15_6 like Mac OS X)',
+                },
+            },
+        ]
+        
+        for i, config in enumerate(configs_to_try, 1):
+            try:
+                print(f"🔄 Tentativa {i}/3 para extrair vídeo do YouTube...")
+                with yt_dlp.YoutubeDL(config) as ydl:  # type: ignore
+                    info = ydl.extract_info(url, download=False)
+                    if info:
+                        print(f"✅ Sucesso na tentativa {i}!")
+                        return info
+            except Exception as e:
+                error_msg = str(e).lower()
+                print(f"⚠️ Tentativa {i} falhou: {str(e)[:100]}")
+                
+                # Se é erro de autenticação/idade, tenta próxima config
+                if 'sign in' in error_msg or 'authentication' in error_msg or 'age' in error_msg:
+                    continue
+                # Se é erro fatal (URL inválida), para de tentar
+                elif 'unsupported url' in error_msg or 'video unavailable' in error_msg:
+                    raise e
+        
+        return None
+    
     def get_video_info(self, url: str) -> VideoInfo:
         """Extrai informações do vídeo sem baixar"""
         
@@ -166,133 +235,122 @@ class VideoDownloader:
                 print(f"⚠ Erro ao usar API alternativa TikTok: {e}")
                 print("→ Tentando yt-dlp como fallback...")
         
-        # Continua com yt-dlp para outras plataformas ou se TikTok falhar
-        ydl_opts = {
-            'quiet': True,
-            'no_warnings': True,
-            'extract_flat': False,
-            'skip_download': True,
-            # Otimizações
-            'socket_timeout': 30,
-            'retries': 3,
-            'ignoreerrors': False,
-            # User-Agent moderno
-            'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language': 'en-us,en;q=0.5',
-                'Sec-Fetch-Mode': 'navigate',
-            },
-            # Configurações específicas por plataforma
-            'extractor_args': self._get_extractor_args(platform)
-        }
-        
-        # Configurações extras para YouTube
+        # ESTRATÉGIA ESPECIAL PARA YOUTUBE: Múltiplas tentativas
         if platform == 'YouTube':
-            ydl_opts['age_limit'] = None  # Remove restrição de idade
-            ydl_opts['nocheckcertificate'] = True
-            # Cookies podem ajudar (mas não são obrigatórios)
-            ydl_opts['cookiesfrombrowser'] = None
-        
-        # Configurações específicas para Instagram (mais permissivo)
-        if platform == 'Instagram':
-            ydl_opts['username'] = None  # Sem autenticação
-            ydl_opts['password'] = None
-            ydl_opts['cookiefile'] = None
-            # User-Agent de navegador real
-            ydl_opts['http_headers'] = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+            info = self._try_youtube_with_different_configs(url)
+            if not info:
+                raise Exception("Não foi possível acessar este vídeo do YouTube após múltiplas tentativas. Pode estar privado, com restrição de região ou ter sido removido.")
+        else:
+            # Continua com yt-dlp para outras plataformas
+            ydl_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'extract_flat': False,
+                'skip_download': True,
+                # Otimizações
+                'socket_timeout': 30,
+                'retries': 3,
+                'ignoreerrors': False,
+                # User-Agent moderno
+                'http_headers': {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                    'Accept-Language': 'en-us,en;q=0.5',
+                    'Sec-Fetch-Mode': 'navigate',
+                },
+                # Configurações específicas por plataforma
+                'extractor_args': self._get_extractor_args(platform)
             }
-        
-        # Configurações específicas para TikTok (bypass login)
-        if platform == 'TikTok':
-            ydl_opts['http_headers'] = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-                'Referer': 'https://www.tiktok.com/'
-            }
-            # Tenta extrair sem cookies primeiro
-            ydl_opts['nocheckcertificate'] = True
-        
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
-                info = ydl.extract_info(url, download=False)
-                
-                if not info:
-                    raise Exception("Não foi possível extrair informações do vídeo")
-                
-                # Processa os formatos disponíveis
-                formats = []
-                if 'formats' in info and info['formats']:
-                    for fmt in info['formats']:
-                        # Filtra apenas formatos válidos
-                        if fmt.get('ext') and fmt.get('format_id'):
-                            video_format = VideoFormat(
-                                format_id=fmt.get('format_id', ''),
-                                ext=fmt.get('ext', ''),
-                                quality=fmt.get('format_note'),
-                                resolution=fmt.get('resolution'),
-                                filesize=fmt.get('filesize'),
-                                format_note=fmt.get('format_note'),
-                                fps=fmt.get('fps'),
-                                vcodec=fmt.get('vcodec'),
-                                acodec=fmt.get('acodec'),
-                            )
-                            formats.append(video_format)
-                
-                # Cria objeto VideoInfo
-                platform = detect_platform(url)
-                thumbnail_url = info.get('thumbnail')
-                
-                # Para Instagram, usa proxy para evitar CORS
-                if platform == 'Instagram' and thumbnail_url:
-                    from urllib.parse import quote
-                    thumbnail_url = f"http://localhost:8000/api/video/proxy-thumbnail?url={quote(thumbnail_url)}"
-                
-                video_info = VideoInfo(
-                    url=url,
-                    title=info.get('title') or 'Unknown',
-                    description=info.get('description'),
-                    thumbnail=thumbnail_url,
-                    duration=info.get('duration'),
-                    uploader=info.get('uploader') or info.get('channel') or info.get('uploader_id'),
-                    uploader_url=info.get('uploader_url') or info.get('channel_url'),
-                    view_count=info.get('view_count'),
-                    formats=formats[:50] if len(formats) > 50 else formats,  # Limita a 50 formatos
-                    platform=platform
-                )
-                
-                # Guarda no cache (expira automaticamente quando reiniciar o servidor)
-                self._info_cache[url] = video_info
-                
-                return video_info
-                
-        except Exception as e:
-            error_msg = str(e)
-            error_lower = error_msg.lower()
             
-            # Erros específicos do yt-dlp
-            if 'unsupported url' in error_lower:
-                raise Exception(f"URL não suportada. Verifique se o link está correto.")
-            elif 'private video' in error_lower and 'this video is private' in error_lower:
-                raise Exception("Este vídeo é privado e não pode ser acessado.")
-            elif 'video unavailable' in error_lower or 'has been removed' in error_lower:
-                raise Exception("Vídeo indisponível ou removido pela plataforma.")
-            elif 'sign in to confirm' in error_lower or 'requires authentication' in error_lower:
-                # Para YouTube, pode ser restrição de idade ou região
-                if platform == 'YouTube':
-                    raise Exception("Este vídeo do YouTube pode ter restrição de idade ou região. Tente atualizar o yt-dlp executando: pip install -U yt-dlp")
+            # Configurações específicas para Instagram (mais permissivo)
+            if platform == 'Instagram':
+                ydl_opts['username'] = None  # Sem autenticação
+                ydl_opts['password'] = None
+                ydl_opts['cookiefile'] = None
+                # User-Agent de navegador real
+                ydl_opts['http_headers'] = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+                }
+            
+            # Configurações específicas para TikTok (bypass login)
+            if platform == 'TikTok':
+                ydl_opts['http_headers'] = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+                    'Referer': 'https://www.tiktok.com/'
+                }
+                # Tenta extrair sem cookies primeiro
+                ydl_opts['nocheckcertificate'] = True
+            
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # type: ignore
+                    info = ydl.extract_info(url, download=False)
+                    
+                    if not info:
+                        raise Exception("Não foi possível extrair informações do vídeo")
+            except Exception as e:
+                error_msg = str(e)
+                error_lower = error_msg.lower()
+                
+                # Erros específicos do yt-dlp
+                if 'unsupported url' in error_lower:
+                    raise Exception(f"URL não suportada. Verifique se o link está correto.")
+                elif 'private video' in error_lower:
+                    raise Exception("Este vídeo é privado e não pode ser acessado.")
+                elif 'video unavailable' in error_lower or 'has been removed' in error_lower:
+                    raise Exception("Vídeo indisponível ou removido pela plataforma.")
+                elif 'requiring login' in error_lower or 'use --cookies' in error_lower:
+                    raise Exception("Este vídeo requer login. Apenas vídeos públicos são suportados.")
+                elif 'geo restricted' in error_lower or 'not available in your country' in error_lower:
+                    raise Exception("Este vídeo tem restrição geográfica.")
+                elif 'http error 429' in error_lower or 'too many requests' in error_lower:
+                    raise Exception("Muitas requisições. Aguarde alguns minutos.")
                 else:
-                    raise Exception("Este vídeo requer autenticação. Apenas vídeos públicos são suportados.")
-            elif 'geo restricted' in error_lower or 'not available in your country' in error_lower:
-                raise Exception("Este vídeo tem restrição geográfica e não está disponível na sua região.")
-            elif 'requiring login' in error_lower or 'use --cookies' in error_lower:
-                # Erro específico do TikTok pedindo login
-                raise Exception("TikTok está bloqueando o acesso. Tente novamente em alguns minutos ou use um vídeo diferente.")
-            elif 'http error 429' in error_lower or 'too many requests' in error_lower:
-                raise Exception("Muitas requisições. Por favor, aguarde alguns minutos antes de tentar novamente.")
-            else:
-                # Erro genérico - mostra mensagem original para debug
-                raise Exception(f"Erro ao extrair informações: {error_msg}")
+                    raise Exception(f"Erro ao extrair informações: {error_msg}")
+        
+        # Processa os formatos disponíveis
+        formats = []
+        if 'formats' in info and info['formats']:
+            for fmt in info['formats']:
+                # Filtra apenas formatos válidos
+                if fmt.get('ext') and fmt.get('format_id'):
+                    video_format = VideoFormat(
+                        format_id=fmt.get('format_id', ''),
+                        ext=fmt.get('ext', ''),
+                        quality=fmt.get('format_note'),
+                        resolution=fmt.get('resolution'),
+                        filesize=fmt.get('filesize'),
+                        format_note=fmt.get('format_note'),
+                        fps=fmt.get('fps'),
+                        vcodec=fmt.get('vcodec'),
+                        acodec=fmt.get('acodec'),
+                    )
+                    formats.append(video_format)
+        
+        # Cria objeto VideoInfo
+        thumbnail_url = info.get('thumbnail')
+        
+        # Para Instagram, usa proxy para evitar CORS
+        if platform == 'Instagram' and thumbnail_url:
+            from urllib.parse import quote
+            thumbnail_url = f"http://localhost:8000/api/video/proxy-thumbnail?url={quote(thumbnail_url)}"
+        
+        video_info = VideoInfo(
+            url=url,
+            title=info.get('title') or 'Unknown',
+            description=info.get('description'),
+            thumbnail=thumbnail_url,
+            duration=info.get('duration'),
+            uploader=info.get('uploader') or info.get('channel') or info.get('uploader_id'),
+            uploader_url=info.get('uploader_url') or info.get('channel_url'),
+            view_count=info.get('view_count'),
+            formats=formats[:50] if len(formats) > 50 else formats,  # Limita a 50 formatos
+            platform=platform
+        )
+        
+        # Guarda no cache (expira automaticamente quando reiniciar o servidor)
+        self._info_cache[url] = video_info
+        
+        return video_info
     
     def download_video(self, request: DownloadRequest) -> Dict[str, Any]:
         """Baixa o vídeo em MP4 ou áudio em MP3"""
