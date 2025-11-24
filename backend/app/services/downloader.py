@@ -132,7 +132,7 @@ class VideoDownloader:
         
         # Lista de configurações para tentar (em ordem de prioridade)
         configs_to_try = [
-            # Config 1: TV Embedded (SEM bot detection - melhor opção)
+            # Config 1: TV Embedded com visitor_data (MELHOR bypass - sem cookies)
             {
                 'quiet': True,
                 'no_warnings': True,
@@ -141,6 +141,9 @@ class VideoDownloader:
                     'youtube': {
                         'player_client': ['tv_embedded'],
                         'player_skip': ['webpage', 'configs'],
+                    },
+                    'youtubetab': {
+                        'skip': ['webpage'],
                     }
                 },
                 'format': 'best',
