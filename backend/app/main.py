@@ -8,14 +8,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Configuration
+# CORS Configuration - Permissivo para produção
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
-    expose_headers=["Content-Disposition"],  # Expor header customizado
+    expose_headers=["Content-Disposition", "Content-Length", "Content-Type"],
+    max_age=3600,  # Cache preflight por 1 hora
 )
 
 

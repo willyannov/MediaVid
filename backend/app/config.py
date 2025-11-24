@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     PORT: int = 8000
     DEBUG: bool = True
     
-    # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:5173,http://localhost:3000,https://mediavid-0bvc.onrender.com,https://mediavid.site,https://www.mediavid.site"
+    # CORS - Permitir acesso do domínio customizado e redes sociais
+    ALLOWED_ORIGINS: str = "http://localhost:5173,http://localhost:3000,https://mediavid-0bvc.onrender.com,https://mediavid.site,https://www.mediavid.site,https://facebook.com,https://www.facebook.com,https://instagram.com,https://www.instagram.com,https://twitter.com,https://x.com,https://tiktok.com,https://www.tiktok.com,https://youtube.com,https://www.youtube.com,https://reddit.com,https://www.reddit.com"
     
     # Download Settings
     MAX_CONCURRENT_DOWNLOADS: int = 3
