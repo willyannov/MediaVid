@@ -35,7 +35,7 @@ async def health_check():
 
 
 # Import routes
-from app.routes import video, websocket, batch
+from app.routes import video, websocket, batch, health
 from app.services.downloader import downloader
 
 # Injeta WebSocket manager no downloader
@@ -44,3 +44,4 @@ downloader.set_websocket_manager(websocket.manager)
 app.include_router(video.router)
 app.include_router(websocket.router)
 app.include_router(batch.router)
+app.include_router(health.router)
