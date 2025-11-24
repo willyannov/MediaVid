@@ -1,7 +1,10 @@
 import axios from 'axios'
 
+// Usar variável de ambiente em produção ou localhost em dev
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: API_URL,
   timeout: 300000, // 5 minutos para downloads grandes
   headers: {
     'Content-Type': 'application/json',
