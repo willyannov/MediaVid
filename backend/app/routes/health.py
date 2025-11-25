@@ -10,6 +10,7 @@ _last_ping = time.time()
 
 
 @router.get("/")
+@router.head("/")
 async def health_check():
     """
     Health check simples para manter servidor ativo
@@ -20,9 +21,11 @@ async def health_check():
 
 
 @router.get("/ping")
+@router.head("/ping")
 async def ping():
     """
     Endpoint para keep-alive automático
+    Suporta GET e HEAD requests
     """
     global _last_ping
     current = time.time()
