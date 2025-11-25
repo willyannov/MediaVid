@@ -37,7 +37,7 @@ which can delay requests by 50 seconds or more."
    
    Monitor Type: HTTP(s)
    Friendly Name: MediaVid Backend
-   URL (or IP): https://mediavid-backend.onrender.com/api/health/ping
+   URL (or IP): https://mediavid.onrender.com/api/health/ping
    Monitoring Interval: 5 minutes
    Monitor Timeout: 30 seconds
    ```
@@ -118,7 +118,7 @@ $7/mês = Sempre online, sem hibernação
    ↓
 3. Dashboard → "Add New Monitor"
    ↓
-4. Cole: https://mediavid-backend.onrender.com/api/health/ping
+4. Cole: https://mediavid.onrender.com/api/health/ping
    ↓
 5. Interval: 5 minutes
    ↓
@@ -161,13 +161,13 @@ Configure também:
 
 ```
 Monitor 1: Backend
-https://mediavid-backend.onrender.com/api/health/ping
+https://mediavid.onrender.com/api/health/ping
 
 Monitor 2: Frontend  
 https://mediavid.site
 
 Monitor 3: API Específica
-https://mediavid-backend.onrender.com/api/health
+https://mediavid.onrender.com/api/health
 ```
 
 **Resultado:**

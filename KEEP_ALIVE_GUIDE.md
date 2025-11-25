@@ -53,7 +53,7 @@ https://uptimerobot.com
 
 Configuração:
 - Monitor Type: HTTP(s)
-- URL: https://mediavid-backend.onrender.com/api/health/ping
+- URL: https://mediavid.onrender.com/api/health/ping
 - Interval: 5 minutos
 - Limit: 50 monitors grátis
 ```
@@ -63,7 +63,7 @@ Configuração:
 https://cron-job.org
 
 Configuração:
-- URL: https://mediavid-backend.onrender.com/api/health/ping
+- URL: https://mediavid.onrender.com/api/health/ping
 - Interval: */10 * * * * (a cada 10 min)
 - Limit: Ilimitado grátis
 ```
@@ -73,7 +73,7 @@ Configuração:
 https://betterstack.com
 
 Configuração:
-- URL: https://mediavid-backend.onrender.com/api/health/ping
+- URL: https://mediavid.onrender.com/api/health/ping
 - Interval: 10 minutos
 - Bonus: Alertas se servidor cair
 ```
@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Backend
-        run: curl -f https://mediavid-backend.onrender.com/api/health/ping
+        run: curl -f https://mediavid.onrender.com/api/health/ping
 ```
 
 ### 2. **Upgrade para Render Paid** ($7/mês)
@@ -167,7 +167,7 @@ Dashboard → Add New Monitor
 
 Monitor Type: HTTP(s)
 Friendly Name: MediaVid Backend
-URL: https://mediavid-backend.onrender.com/api/health/ping
+URL: https://mediavid.onrender.com/api/health/ping
 Monitoring Interval: 5 minutes
 Monitor Timeout: 30 seconds
 Alert Contacts: seu@email.com

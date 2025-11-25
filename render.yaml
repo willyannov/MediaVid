@@ -33,5 +33,5 @@ services:
     name: mediavid-keepalive
     schedule: "*/10 * * * *" # A cada 10 minutos
     buildCommand: pip install requests
-    startCommand: python -c "import requests; requests.get('https://mediavid-backend.onrender.com/api/health/ping')"
+    startCommand: python -c "import requests; requests.get('https://mediavid.onrender.com/api/health/ping')"
     runtime: python
