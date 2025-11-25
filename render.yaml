@@ -1,35 +1,37 @@
-# 📦 Preparação para Deploy
-
-Este arquivo contém as configurações necessárias para fazer deploy no Render.com
-
-## Configurações do Render
-
-### Backend (Web Service)
-- **Build Command:** `pip install -r requirements.txt`
-- **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- **Root Directory:** `backend`
-
-### Frontend (Static Site)
-- **Build Command:** `npm install && npm run build`
-- **Publish Directory:** `dist`
-- **Root Directory:** `frontend`
-
-## Variáveis de Ambiente
-
-### Backend (.env)
-```
-ENVIRONMENT=production
-PORT=8000
-ALLOWED_ORIGINS=https://seu-frontend.onrender.com
-```
-
-### Frontend
-```
-VITE_API_URL=https://seu-backend.onrender.com
-```
-
-## Importante
-
-1. Substitua as URLs pelos endereços reais após deploy
-2. Configure CORS no backend para aceitar requisições do frontend
-3. Mantenha este arquivo atualizado
+services:
+  # Backend API
+  - type: web
+    name: mediavid-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.0
+    healthCheckPath: /api/health/ping
+    rootDir: backend
+  
+  # Frontend Static Site
+  - type: web
+    name: mediavid-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false # Configurar manualmente no dashboard
+    rootDir: frontend
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+  
+  # Cron Job - Keep Alive (Previne hibernação)
+  - type: cron
+    name: mediavid-keepalive
+    schedule: "*/10 * * * *" # A cada 10 minutos
+    buildCommand: pip install requests
+    startCommand: python -c "import requests; requests.get('https://mediavid-backend.onrender.com/api/health/ping')"
+    runtime: python
