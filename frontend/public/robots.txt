@@ -1,9 +1,27 @@
+# MediaVid - Download de Vídeos Grátis
+# Sitemap: https://mediavid.site/sitemap.xml
+
 User-agent: *
+Allow: /
+Allow: /batch
+Allow: /privacy
+Allow: /terms
+
+# Bloquear APIs e downloads temporários
+Disallow: /api/
+Disallow: /temp/
+Disallow: /*.json$
+Disallow: /*?download=*
+
+# Permitir bots de busca específicos
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
 Allow: /
 
 # Sitemap
 Sitemap: https://mediavid.site/sitemap.xml
-
-# Desallow temporários (opcional)
-Disallow: /api/
-Disallow: /temp/

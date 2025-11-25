@@ -238,6 +238,135 @@ function Home() {
             </div>
           )}
 
+          {/* Seção SEO - Conteúdo Rico para Google */}
+          {!videoInfo && !loading && (
+            <div className="mt-12 space-y-8">
+              {/* Como Funciona */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+                <h2 className="text-2xl font-bold mb-6 text-center">📖 Como Baixar Vídeos?</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-3xl font-bold text-primary-600">1</span>
+                    </div>
+                    <h3 className="font-semibold mb-2">Cole o Link</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Copie a URL do vídeo do Instagram, TikTok, Twitter ou Reddit e cole acima
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-3xl font-bold text-primary-600">2</span>
+                    </div>
+                    <h3 className="font-semibold mb-2">Escolha a Qualidade</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Selecione HD, Full HD ou apenas áudio MP3 conforme sua preferência
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <span className="text-3xl font-bold text-primary-600">3</span>
+                    </div>
+                    <h3 className="font-semibold mb-2">Baixe Grátis</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Clique em baixar e salve o vídeo sem marca d'água no seu dispositivo
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Por que escolher MediaVid */}
+              <div className="bg-gradient-to-r from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20 rounded-xl shadow-lg p-8">
+                <h2 className="text-2xl font-bold mb-6 text-center">⭐ Por que usar o MediaVid?</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <div className="text-center">
+                    <div className="text-4xl mb-3">🆓</div>
+                    <h3 className="font-semibold mb-2">100% Grátis</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Sem taxas, sem cadastro, sem limite de downloads
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl mb-3">✨</div>
+                    <h3 className="font-semibold mb-2">Sem Marca d'Água</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Vídeos limpos, sem logos ou marcas indesejadas
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl mb-3">⚡</div>
+                    <h3 className="font-semibold mb-2">Super Rápido</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Downloads em alta velocidade, sem espera
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-4xl mb-3">🔒</div>
+                    <h3 className="font-semibold mb-2">Seguro e Privado</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Seus dados e downloads são completamente privados
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* FAQ */}
+              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+                <h2 className="text-2xl font-bold mb-6 text-center">❓ Perguntas Frequentes</h2>
+                <div className="space-y-4 max-w-3xl mx-auto">
+                  <details className="group">
+                    <summary className="font-semibold cursor-pointer list-none flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <span>Como baixar Reels do Instagram sem marca d'água?</span>
+                      <span className="transition group-open:rotate-180">▼</span>
+                    </summary>
+                    <p className="mt-3 px-4 text-gray-600 dark:text-gray-400">
+                      Basta copiar o link do Reel, colar no MediaVid, clicar em buscar e baixar. O vídeo será salvo sem marca d'água e em alta qualidade.
+                    </p>
+                  </details>
+                  
+                  <details className="group">
+                    <summary className="font-semibold cursor-pointer list-none flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <span>É realmente grátis baixar vídeos do TikTok?</span>
+                      <span className="transition group-open:rotate-180">▼</span>
+                    </summary>
+                    <p className="mt-3 px-4 text-gray-600 dark:text-gray-400">
+                      Sim! O MediaVid é 100% gratuito. Baixe quantos vídeos quiser do TikTok, Instagram, Twitter e outras redes sociais sem pagar nada.
+                    </p>
+                  </details>
+                  
+                  <details className="group">
+                    <summary className="font-semibold cursor-pointer list-none flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <span>Preciso instalar algum aplicativo?</span>
+                      <span className="transition group-open:rotate-180">▼</span>
+                    </summary>
+                    <p className="mt-3 px-4 text-gray-600 dark:text-gray-400">
+                      Não! O MediaVid funciona direto no seu navegador. Não precisa baixar nada, não precisa instalar aplicativos. Acesse, cole o link e baixe.
+                    </p>
+                  </details>
+                  
+                  <details className="group">
+                    <summary className="font-semibold cursor-pointer list-none flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <span>Quais redes sociais são suportadas?</span>
+                      <span className="transition group-open:rotate-180">▼</span>
+                    </summary>
+                    <p className="mt-3 px-4 text-gray-600 dark:text-gray-400">
+                      Atualmente suportamos Instagram (Reels), TikTok, Twitter/X, Reddit e Facebook. Todos com download em alta qualidade e sem marca d'água.
+                    </p>
+                  </details>
+                  
+                  <details className="group">
+                    <summary className="font-semibold cursor-pointer list-none flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
+                      <span>O download funciona no celular?</span>
+                      <span className="transition group-open:rotate-180">▼</span>
+                    </summary>
+                    <p className="mt-3 px-4 text-gray-600 dark:text-gray-400">
+                      Sim! O MediaVid funciona perfeitamente em celulares Android e iPhone. Abra no navegador do seu celular e baixe vídeos normalmente.
+                    </p>
+                  </details>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       </main>
@@ -246,7 +375,7 @@ function Home() {
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-6">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-600 dark:text-gray-400">
-            <p>MediaVid © 2025</p>
+            <p>MediaVid © 2025 - Baixar Vídeos Instagram, TikTok, Twitter, Reddit Grátis</p>
             <div className="flex gap-4">
               <a href="/terms" className="hover:text-primary-600 transition-colors">Termos de Uso</a>
               <span>•</span>
