@@ -95,7 +95,7 @@ function Home() {
               Baixe vídeos de qualquer rede social
             </h2>
             <p className="text-gray-600 dark:text-gray-400 text-lg">
-              Suporte para YouTube, Instagram, TikTok, Twitter, Facebook e Reddit
+              Suporte para Instagram, TikTok, Twitter, Facebook e Reddit
             </p>
           </div>
 
@@ -142,7 +142,8 @@ function Home() {
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
               <h3 className="text-xl font-bold mb-4 text-center">📱 Plataformas Suportadas</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                {/* YouTube TEMPORARIAMENTE DESABILITADO */}
+                {/* <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
                   <div className="font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
                     <YouTubeIcon className="w-5 h-5" />
                     YouTube
@@ -153,7 +154,7 @@ function Home() {
                     <br />
                     youtube.com/shorts/...
                   </code>
-                </div>
+                </div> */}
                 
                 <div className="p-4 rounded-lg bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800">
                   <div className="font-semibold text-pink-700 dark:text-pink-400 mb-2 flex items-center gap-2">

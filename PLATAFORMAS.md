@@ -4,33 +4,12 @@ Este documento lista todas as plataformas de mídia social suportadas pelo Socia
 
 ---
 
-## 🎬 YouTube
-**Status:** ✅ Totalmente Suportado
+<!-- ## 🎬 YouTube
+**Status:** ⚠️ TEMPORARIAMENTE DESABILITADO
 
-### Tipos de Conteúdo:
-- ✅ Vídeos normais (qualquer duração)
-- ✅ YouTube Shorts (vídeos curtos verticais)
-- ✅ Transmissões ao vivo (arquivadas)
-- ✅ Vídeos de playlists
-
-### Exemplos de URLs:
-```
-https://www.youtube.com/watch?v=dQw4w9WgXcQ
-https://youtu.be/dQw4w9WgXcQ
-https://www.youtube.com/shorts/BNZs70LwTZM
-https://www.youtube.com/watch?v=ID&t=120s
-```
-
-### Qualidades Disponíveis:
-- 🎥 Full HD 1080p
-- 🎥 HD 720p
-- 🎥 SD 480p
-- 🎥 Low 360p
-- 🎵 MP3 (apenas áudio)
-
-### Notas:
-- Vídeos privados ou com restrição de idade não são suportados
-- Velocidade de download limitada pelo YouTube (~7-12 MB/s)
+YouTube está temporariamente indisponível devido a problemas de compatibilidade.
+Estamos trabalhando para reativar em breve.
+-->
 
 ---
 

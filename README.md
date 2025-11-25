@@ -8,7 +8,8 @@ Baixe vídeos de qualquer rede social de forma rápida e fácil.
 
 ## 📦 Plataformas Suportadas
 
-✅ YouTube | ✅ Instagram | ✅ TikTok | ✅ Twitter/X | ✅ Facebook | ✅ Reddit
+✅ Instagram | ✅ TikTok | ✅ Twitter/X | ✅ Facebook | ✅ Reddit
+<!-- YouTube temporariamente desabilitado -->
 
 ## ✨ Funcionalidades
 

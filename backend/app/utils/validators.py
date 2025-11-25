@@ -19,9 +19,10 @@ def detect_platform(url: str) -> Optional[str]:
     url_lower = url.lower()
     
     # Detecta plataformas com padrões específicos
-    if 'youtube.com' in url_lower or 'youtu.be' in url_lower:
-        return 'YouTube'
-    elif 'instagram.com' in url_lower:
+    # YouTube TEMPORARIAMENTE DESABILITADO
+    # if 'youtube.com' in url_lower or 'youtu.be' in url_lower:
+    #     return 'YouTube'
+    if 'instagram.com' in url_lower:
         return 'Instagram'
     elif 'tiktok.com' in url_lower:
         return 'TikTok'
