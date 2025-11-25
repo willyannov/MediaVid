@@ -5,6 +5,9 @@ import Terms from './pages/Terms'
 import Privacy from './pages/Privacy'
 // import Batch from './pages/Batch' // Desativado temporariamente
 
+// Keep-alive para prevenir hibernação do backend
+import './services/keepAlive'
+
 function App() {
   return (
     <ThemeProvider>

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.responses import FileResponse, StreamingResponse
 from app.models.video import VideoInfo, DownloadRequest, DownloadResponse
 from app.services.downloader import downloader
-from app.utils.validators import validate_url
+from app.utils.validators import validate_url, detect_platform
 import os
 import requests
 
@@ -22,11 +22,26 @@ async def get_video_info(request: dict):
     if not validate_url(url):
         raise HTTPException(status_code=400, detail="URL inválida")
     
+    # Valida plataforma suportada
+    platform = detect_platform(url)
+    if platform == 'Unknown':
+        raise HTTPException(
+            status_code=400, 
+            detail="Plataforma não suportada. Atualmente suportamos: Instagram, TikTok, Twitter/X, Facebook e Reddit."
+        )
+    
     try:
         video_info = downloader.get_video_info(url)
         return video_info
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_msg = str(e)
+        # Se demorar muito ou falhar, retorna mensagem amigável
+        if 'timeout' in error_msg.lower() or 'timed out' in error_msg.lower():
+            raise HTTPException(
+                status_code=408, 
+                detail="Tempo limite excedido. Tente novamente ou verifique se o vídeo é público."
+            )
+        raise HTTPException(status_code=500, detail=error_msg)
 
 
 @router.post("/download")
