@@ -152,6 +152,33 @@ https://old.reddit.com/r/subreddit/comments/...
 
 ---
 
+## 📌 Pinterest
+**Status:** ✅ Totalmente Suportado
+
+### Tipos de Conteúdo:
+- ✅ Vídeos em Pins
+- ✅ Idea Pins (vídeos curtos)
+- ✅ Story Pins com vídeo
+
+### Exemplos de URLs:
+```
+https://www.pinterest.com/pin/1234567890123456789/
+https://br.pinterest.com/pin/1234567890123456789/
+https://pin.it/ABC123xyz (link curto)
+```
+
+### Qualidades Disponíveis:
+- Baixa automaticamente na melhor qualidade disponível
+- Geralmente HD 720p ou 1080p
+
+### Notas:
+- Apenas conteúdo público pode ser baixado
+- Pins privados de boards fechados não são suportados
+- Links curtos (pin.it) são automaticamente expandidos
+- Alguns vídeos podem ter restrições geográficas
+
+---
+
 ## 🚀 Como Usar
 
 ### Download Individual:
@@ -226,6 +253,7 @@ https://old.reddit.com/r/subreddit/comments/...
 | Twitter/X | ⭐⭐⭐⭐⭐ (100%) | Até 1080p | Boa        |
 | Facebook  | ⭐⭐⭐⭐ (85%)    | Até 720p  | Média      |
 | Reddit    | ⭐⭐⭐⭐⭐ (100%) | Até 720p  | Boa        |
+| Pinterest | ⭐⭐⭐⭐⭐ (100%) | Até 1080p | Boa        |
 
 ---
 

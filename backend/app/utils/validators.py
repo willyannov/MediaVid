@@ -32,6 +32,8 @@ def detect_platform(url: str) -> Optional[str]:
         return 'Facebook'
     elif 'reddit.com' in url_lower:
         return 'Reddit'
+    elif 'pinterest.com' in url_lower or 'pin.it' in url_lower:
+        return 'Pinterest'
     
     return 'Unknown'
 

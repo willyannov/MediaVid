@@ -8,7 +8,7 @@ import FormatSelector from '../components/VideoInfo/FormatSelector'
 import DownloadButton from '../components/Download/DownloadButton'
 import Toast from '../components/UI/Toast'
 import Loading from '../components/UI/Loading'
-import { VideoIcon, YouTubeIcon, InstagramIcon, TikTokIcon, TwitterIcon, FacebookIcon, RedditIcon } from '../components/UI/SocialIcons'
+import { VideoIcon, YouTubeIcon, InstagramIcon, TikTokIcon, TwitterIcon, FacebookIcon, RedditIcon, PinterestIcon } from '../components/UI/SocialIcons'
 
 function Home() {
   const { isDark, toggleTheme } = useTheme()
@@ -95,7 +95,7 @@ function Home() {
               Baixe vídeos de qualquer rede social
             </h2>
             <p className="text-gray-600 dark:text-gray-400 text-lg">
-              Suporte para Instagram, TikTok, Twitter, Facebook e Reddit
+              Suporte para Instagram, TikTok, Twitter, Facebook, Reddit e Pinterest
             </p>
           </div>
 
@@ -212,6 +212,17 @@ function Home() {
                     reddit.com/r/.../comments/...
                   </code>
                 </div>
+                
+                <div className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                  <div className="font-semibold text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
+                    <PinterestIcon className="w-5 h-5" />
+                    Pinterest
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Vídeos e Pins</p>
+                  <code className="text-xs text-gray-500 dark:text-gray-500 mt-1 block">
+                    pinterest.com/pin/...
+                  </code>
+                </div>
               </div>
             </div>
           )}
@@ -251,7 +262,7 @@ function Home() {
                     </div>
                     <h3 className="font-semibold mb-2">Cole o Link</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Copie a URL do vídeo do Instagram, TikTok, Twitter ou Reddit e cole acima
+                      Copie a URL do vídeo do Instagram, TikTok, Twitter, Reddit ou Pinterest e cole acima
                     </p>
                   </div>
                   <div className="text-center">
@@ -350,7 +361,7 @@ function Home() {
                       <span className="transition group-open:rotate-180">▼</span>
                     </summary>
                     <p className="mt-3 px-4 text-gray-600 dark:text-gray-400">
-                      Atualmente suportamos Instagram (Reels), TikTok, Twitter/X, Reddit e Facebook. Todos com download em alta qualidade e sem marca d'água.
+                      Atualmente suportamos Instagram (Reels), TikTok, Twitter/X, Reddit, Facebook e Pinterest. Todos com download em alta qualidade e sem marca d'água.
                     </p>
                   </details>
                   
@@ -375,7 +386,7 @@ function Home() {
       <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-6">
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-gray-600 dark:text-gray-400">
-            <p>MediaVid © 2025 - Baixar Vídeos Instagram, TikTok, Twitter, Reddit Grátis</p>
+            <p>MediaVid © 2025 - Baixar Vídeos Instagram, TikTok, Twitter, Reddit, Pinterest Grátis</p>
             <div className="flex gap-4">
               <a href="/terms" className="hover:text-primary-600 transition-colors">Termos de Uso</a>
               <span>•</span>
