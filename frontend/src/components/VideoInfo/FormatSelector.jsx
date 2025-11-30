@@ -13,6 +13,7 @@ function FormatSelector({ videoInfo, onSelectionChange }) {
     videoInfo.platform === 'Twitter' ||
     videoInfo.platform === 'Reddit' ||
     videoInfo.platform === 'Facebook' ||
+    videoInfo.platform === 'Pinterest' ||
     (videoInfo.url && videoInfo.url.includes('/shorts/'))
 
   useEffect(() => {
@@ -87,6 +88,7 @@ function FormatSelector({ videoInfo, onSelectionChange }) {
             {videoInfo.platform === 'Twitter' && '🐦 Twitter/X'}
             {videoInfo.platform === 'Reddit' && '🤖 Reddit'}
             {videoInfo.platform === 'Facebook' && '📘 Facebook'}
+            {videoInfo.platform === 'Pinterest' && '📌 Pinterest'}
             {videoInfo.url?.includes('/shorts/') && '▶️ YouTube Shorts'}
           </p>
         </div>
