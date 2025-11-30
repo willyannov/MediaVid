@@ -422,10 +422,12 @@ class VideoDownloader:
         # Cria objeto VideoInfo
         thumbnail_url = info.get('thumbnail')
         
-        # Para Instagram, usa proxy para evitar CORS
-        if platform == 'Instagram' and thumbnail_url:
+        # Usa proxy para thumbnails de todas as plataformas (evita problemas de CORS)
+        if thumbnail_url and thumbnail_url.startswith('http'):
             from urllib.parse import quote
-            thumbnail_url = f"http://localhost:8000/api/video/proxy-thumbnail?url={quote(thumbnail_url)}"
+            # Usa API_URL da configuração (produção ou desenvolvimento)
+            api_url = settings.API_URL if hasattr(settings, 'API_URL') else "http://localhost:8000"
+            thumbnail_url = f"{api_url}/api/video/proxy-thumbnail?url={quote(thumbnail_url)}"
         
         video_info = VideoInfo(
             url=url,

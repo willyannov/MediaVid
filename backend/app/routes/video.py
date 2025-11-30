@@ -103,17 +103,20 @@ async def get_available_formats():
 @router.get("/proxy-thumbnail")
 async def proxy_thumbnail(url: str):
     """
-    Proxy para thumbnails do Instagram (evita bloqueio CORS)
+    Proxy para thumbnails de todas as plataformas (evita bloqueio CORS)
     """
     if not url:
         raise HTTPException(status_code=400, detail="URL da thumbnail é obrigatória")
     
     try:
-        # Faz requisição com headers de navegador
+        # Headers genéricos que funcionam para todas as plataformas
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-            'Referer': 'https://www.instagram.com/',
             'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Sec-Fetch-Dest': 'image',
+            'Sec-Fetch-Mode': 'no-cors',
+            'Sec-Fetch-Site': 'cross-site',
         }
         
         response = requests.get(url, headers=headers, timeout=10)
