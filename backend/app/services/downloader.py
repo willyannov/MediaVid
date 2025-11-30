@@ -618,6 +618,7 @@ class VideoDownloader:
                 platform == 'TikTok' or 
                 platform == 'Twitter' or
                 platform == 'Facebook' or
+                platform == 'Pinterest' or
                 '/shorts/' in request.url.lower()
             )
             
