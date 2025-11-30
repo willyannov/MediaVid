@@ -399,7 +399,10 @@ class VideoDownloader:
         
         # Processa os formatos disponíveis
         formats = []
-        if 'formats' in info and info['formats']:
+        
+        # Apenas YouTube permite seleção de qualidade
+        # Outras plataformas (Instagram, TikTok, Twitter, Facebook, Reddit, Pinterest) usam formato automático 'best'
+        if platform == 'YouTube' and 'formats' in info and info['formats']:
             for fmt in info['formats']:
                 # Filtra apenas formatos válidos
                 if fmt.get('ext') and fmt.get('format_id'):
