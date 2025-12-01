@@ -1,6 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
+import logging
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="MediaVid API",
@@ -18,6 +23,13 @@ app.add_middleware(
     expose_headers=["Content-Disposition", "Content-Length", "Content-Type"],
     max_age=3600,  # Cache preflight por 1 hora
 )
+
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info("🚀 MediaVid API iniciando...")
+    logger.info(f"✅ Ambiente: {settings.DEBUG and 'development' or 'production'}")
+    logger.info(f"✅ CORS Origins: {len(settings.cors_origins)} configurados")
 
 
 @app.get("/")
