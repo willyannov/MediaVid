@@ -220,7 +220,7 @@ GET /api/health/ping - 200 OK
 platform = detect_platform(url)
 if platform == 'Unknown':
     return "Plataforma não suportada. 
-            Suportamos: Instagram, TikTok, Twitter, Facebook, Reddit"
+            Suportamos: Instagram, TikTok, Twitter, Facebook, Reddit, Pinterest"
 ```
 
 **Resultado:**

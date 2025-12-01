@@ -27,7 +27,7 @@ async def get_video_info(request: dict):
     if platform == 'Unknown':
         raise HTTPException(
             status_code=400, 
-            detail="Plataforma não suportada. Atualmente suportamos: Instagram, TikTok, Twitter/X, Facebook e Reddit."
+            detail="Plataforma não suportada. Atualmente suportamos: Instagram, TikTok, Twitter/X, Facebook, Reddit e Pinterest."
         )
     
     try:

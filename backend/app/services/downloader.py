@@ -596,8 +596,8 @@ class VideoDownloader:
             }
             ydl_opts['nocheckcertificate'] = True
         
-        # Configurações específicas para Reddit - desabilita downloads fragmentados problemáticos
-        if platform == 'Reddit':
+        # Configurações específicas para Reddit e Pinterest - desabilita downloads fragmentados problemáticos
+        if platform == 'Reddit' or platform == 'Pinterest':
             ydl_opts['concurrent_fragment_downloads'] = 1  # Apenas 1 fragmento por vez
             ydl_opts['fragment_retries'] = 3  # Menos tentativas
             ydl_opts['http_chunk_size'] = None  # Desabilita chunking que causa problemas
@@ -627,19 +627,19 @@ class VideoDownloader:
                 '/shorts/' in request.url.lower()
             )
             
-            # Reddit precisa de tratamento especial
-            if platform == 'Reddit':
-                # Reddit tem estrutura de vídeo/áudio separados, precisa merge
+            # Reddit e Pinterest precisam de tratamento especial (vídeo/áudio separados)
+            if platform == 'Reddit' or platform == 'Pinterest':
+                # Reddit e Pinterest têm estrutura de vídeo/áudio separados, precisam merge
                 # Precisa de FFmpeg instalado para fazer o merge
                 if self.ffmpeg_location and os.path.exists(self.ffmpeg_location):
                     ydl_opts['format'] = 'bestvideo+bestaudio/best'
                     ydl_opts['merge_output_format'] = 'mp4'
                     ydl_opts['ffmpeg_location'] = os.path.dirname(self.ffmpeg_location)
-                    print(f"Detectado Reddit - usando formato com merge de vídeo+áudio (FFmpeg disponível)")
+                    print(f"Detectado {platform} - usando formato com merge de vídeo+áudio (FFmpeg disponível)")
                 else:
                     # Sem FFmpeg, tenta pegar stream único
                     ydl_opts['format'] = 'best'
-                    print(f"Detectado Reddit - usando melhor stream único (FFmpeg não disponível)")
+                    print(f"Detectado {platform} - usando melhor stream único (FFmpeg não disponível)")
             elif is_short_format:
                 # Para vídeos curtos, Twitter e Facebook: apenas o melhor disponível
                 ydl_opts['format'] = 'best'

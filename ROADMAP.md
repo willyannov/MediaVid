@@ -12,7 +12,7 @@ Sistema web para download de vídeos de múltiplas redes sociais com suporte a c
 - **Requisições**: Axios
 
 ### Redes Sociais Suportadas
-✅ YouTube | ✅ Instagram | ✅ TikTok | ✅ Twitter/X | ✅ Facebook | ✅ Reddit
+✅ YouTube | ✅ Instagram | ✅ TikTok | ✅ Twitter/X | ✅ Facebook | ✅ Reddit | ✅ Pinterest
 
 ---
 
